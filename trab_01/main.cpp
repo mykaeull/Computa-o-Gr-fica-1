@@ -137,20 +137,20 @@ int main()
 
     vector<Sphere> spheres;
 
-    Sphere sphere1(1, Vector(0, 0, -(vp.d + 1)), Color(255, 0, 0));    // red
-    Sphere sphere2(1, Vector(2.2, 0, -(vp.d + 1)), Color(0, 0, 255));  // blue
-    Sphere sphere3(1, Vector(-2.2, 0, -(vp.d + 1)), Color(0, 255, 0)); // green
+    // Sphere sphere1(1, Vector(0, 0, -(vp.d + 1)), Color(255, 0, 0));    // red
+    Sphere sphere2(1, Vector(0, 0, -(vp.d + 1)), Color(0, 0, 255)); // blue
+    // Sphere sphere3(1, Vector(-2.2, 0, -(vp.d + 1)), Color(0, 255, 0)); // green
 
-    spheres.push_back(sphere1);
+    // spheres.push_back(sphere1);
     spheres.push_back(sphere2);
-    spheres.push_back(sphere3);
+    // spheres.push_back(sphere3);
 
     Scene scene(spheres, canva);
 
     ofstream out("out.ppm");
 
     out << "P3";
-    out << std::endl;
+    out << endl;
     out << canva.w << endl;
     out << canva.h << endl;
     out << 255 << endl;
