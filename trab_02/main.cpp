@@ -220,12 +220,12 @@ int main()
 
     vector<Sphere> spheres;
 
-    // Sphere sphere1(1, Vector(0, 0, -(vp.d + 1)), Color(255, 0, 0));    // red
-    Sphere sphere2(1, Vector(0, 0, -(vp.d + 1)), Color(0, 0, 255), 1000.); // blue
-    // Sphere sphere3(1, Vector(-2.2, 0, -(vp.d + 1)), Color(0, 255, 0)); // green
+    Sphere sphere1(1, Vector(0, 0, -(vp.d + 1)), Color(0, 0, 255), 1000.); // blue
+    // Sphere sphere2(1, Vector(2.2, 0.5, -(vp.d + 1)), Color(255, 0, 0), 1000.);  // red
+    // Sphere sphere3(1, Vector(-2.2, 0.5, -(vp.d + 1)), Color(0, 255, 0), 1000.); // green
 
-    // spheres.push_back(sphere1);
-    spheres.push_back(sphere2);
+    spheres.push_back(sphere1);
+    // spheres.push_back(sphere2);
     // spheres.push_back(sphere3);
 
     Light point_light(Vector(0.7, 0.7, 0.7), Vector(0, 5., 0));

@@ -1,5 +1,14 @@
 #include <bits/stdc++.h>
 
+#define STB_IMAGE_IMPLEMENTATION
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+
+#include "stb_image.h"
+#include "stb_image_write.h"
+
+typedef unsigned char int8;
+#define CHANNEL_NUM 3
+
 using namespace std;
 
 typedef struct Vector
@@ -155,13 +164,18 @@ int main()
     out << canva.h << endl;
     out << 255 << endl;
 
-    for (int y = 0; y < canva.h; y++)
+    int8 *sphere_image = new int8[(int)canva.w * (int)canva.h * CHANNEL_NUM];
+    for (int y = 0, c = 0; y < canva.h; y++)
     {
         for (int x = 0; x < canva.w; x++)
         {
             Vector D = canva.canvas_to_viewport(x, y);
 
             Color color = scene.trace_ray(Vector(0., 0., 0.), D, 1.0, INFINITY);
+
+            sphere_image[c++] = min((int)color.r, 255);
+            sphere_image[c++] = min((int)color.g, 255);
+            sphere_image[c++] = min((int)color.b, 255);
 
             out << color.r << endl;
             out << color.g << endl;
@@ -170,6 +184,10 @@ int main()
     }
 
     out.close();
+
+    stbi_write_png("out.png", canva.w, canva.h, CHANNEL_NUM, sphere_image, canva.w * CHANNEL_NUM);
+
+    stbi_image_free(sphere_image);
 
     return 0;
 }
