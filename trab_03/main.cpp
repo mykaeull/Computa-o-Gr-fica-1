@@ -11,6 +11,8 @@ typedef unsigned char int8;
 
 using namespace std;
 
+int teste = 0;
+
 typedef struct Vector
 {
     double x, y, z;
@@ -69,17 +71,15 @@ typedef struct Sphere
 {
     double radius;
     Vector center;
-    Color bg;
     double specular;
     Vector k_d;
     Vector k_e;
     Vector k_a;
 
-    Sphere(double r, Vector c, Color color, double s, Vector K_d, Vector K_e, Vector K_a)
+    Sphere(double r, Vector c, double s, Vector K_d, Vector K_e, Vector K_a)
     {
         radius = r;
         center = c;
-        bg = color;
         specular = s;
         k_d = K_d;
         k_e = K_e;
@@ -93,17 +93,15 @@ typedef struct Plane
 {
     Vector p_pi;
     Vector normal;
-    Color bg;
     double specular;
     Vector k_d;
     Vector k_e;
     Vector k_a;
 
-    Plane(Vector P_pi, Vector n, Color color, double s, Vector K_d, Vector K_e, Vector K_a)
+    Plane(Vector P_pi, Vector n, double s, Vector K_d, Vector K_e, Vector K_a)
     {
         p_pi = P_pi;
         normal = n;
-        bg = color;
         specular = s;
         k_d = K_d;
         k_e = K_e;
@@ -112,6 +110,44 @@ typedef struct Plane
     Plane() {}
 
 } Plane;
+
+typedef struct Object
+{
+    string type;
+    double radius;
+    Vector center;
+    Vector p_pi;
+    Vector normal;
+    double specular;
+    Vector k_d;
+    Vector k_e;
+    Vector k_a;
+
+    Object(string object_type, double r, Vector c, double s, Vector K_d, Vector K_e, Vector K_a) // Sphere
+    {
+        type = object_type;
+        radius = r;
+        center = c;
+        specular = s;
+        k_d = K_d;
+        k_e = K_e;
+        k_a = K_a;
+    }
+
+    Object(string object_type, Vector P_pi, Vector n, double s, Vector K_d, Vector K_e, Vector K_a) // Plane
+    {
+        type = object_type;
+        p_pi = P_pi;
+        normal = n;
+        specular = s;
+        k_d = K_d;
+        k_e = K_e;
+        k_a = K_a;
+    }
+
+    Object() { radius = -1; }
+
+} Object;
 
 typedef struct Light
 {
@@ -131,15 +167,13 @@ typedef struct Light
 
 typedef struct Scene
 {
-    vector<Sphere> spheres;
-    vector<Plane> planes;
+    vector<Object> objects;
     Canvas canva;
     vector<Light> lights;
 
-    Scene(vector<Sphere> spheres_scene, vector<Plane> planes_scene, Canvas c, vector<Light> lights_scene)
+    Scene(vector<Object> objects_scene, Canvas c, vector<Light> lights_scene)
     {
-        spheres = spheres_scene;
-        planes = planes_scene;
+        objects = objects_scene;
         canva = c;
         lights = lights_scene;
     }
@@ -164,9 +198,8 @@ typedef struct Scene
         return sqrt((v.x * v.x) + (v.y * v.y) + (v.z * v.z));
     }
 
-    Vector compute_lighting(Vector pi, Vector N, Vector V, auto object) // NAO SEI SE FUNCIONA (SE FUNCIONAR, TENTAR vector<auto> objetos)
+    Vector compute_lighting(Vector pi, Vector N, Vector V, Object object)
     {
-        // double i = 0.0; // intensidade
         Vector i(0.0, 0.0, 0.0);
 
         for (int j = 0; j < lights.size(); j++)
@@ -180,7 +213,8 @@ typedef struct Scene
             else
             {
                 Vector L = Vector(lights[j].position.x - pi.x, lights[j].position.y - pi.y, lights[j].position.z - pi.z);
-                L = Vector(L.x / length(L), L.y / length(L), L.z / length(L));
+                double Pf_Pi = length(L);
+                L = Vector(L.x / Pf_Pi, L.y / Pf_Pi, L.z / Pf_Pi);
                 double n_dot_l = dot(N, L);
 
                 // DIFUSA
@@ -209,7 +243,7 @@ typedef struct Scene
         return i;
     }
 
-    pair<double, double> intersect_ray_sphere(Vector p0, Vector D, Sphere sphere)
+    pair<double, double> intersect_ray_sphere(Vector p0, Vector D, Object sphere)
     {
         double r = sphere.radius;
 
@@ -228,12 +262,15 @@ typedef struct Scene
         return {(-b + sqrt(delta)) / (2. * a), (-b - sqrt(delta)) / (2. * a)};
     }
 
-    double intersect_ray_plane(Vector p0, Vector D, Plane plane)
+    double intersect_ray_plane(Vector p0, Vector D, Object plane)
     {
         Vector w = Vector(p0.x - plane.p_pi.x, p0.y - plane.p_pi.y, p0.z - plane.p_pi.z);
         Vector normal = plane.normal;
 
-        double ti = -((w.x * normal.x) + (w.y * normal.y) + (w.z * normal.z)) / ((D.x * normal.x) + (D.y * normal.y) + (D.z * normal.z));
+        double num = ((w.x * normal.x) + (w.y * normal.y) + (w.z * normal.z));
+        double den = ((D.x * normal.x) + (D.y * normal.y) + (D.z * normal.z));
+
+        double ti = -num / den;
 
         if (ti < 0)
         {
@@ -243,35 +280,72 @@ typedef struct Scene
         return ti;
     }
 
-    Color trace_ray(Vector p0, Vector D, double t_min, double t_max)
+    bool has_shadow(Vector pi, Vector L, double length_Pf_Pi)
     {
-        double closest_t_sphere = INFINITY;
-        double closest_t_plane = INFINITY;
-        Sphere closest_sphere;
-        Plane closest_plane;
-        double t1, t2;
-        for (int i = 0; i < spheres.size(); i++)
+        bool shadow = false;
+        double s1, s2;
+
+        for (int i = 0; i < objects.size(); i++)
         {
-            tie(t1, t2) = intersect_ray_sphere(p0, D, spheres[i]);
-            if ((t1 >= t_min && t1 <= t_max) && t1 < closest_t_sphere)
+            if (objects[i].type == "sphere")
             {
-                closest_t_sphere = t1;
-                closest_sphere = spheres[i];
+                tie(s1, s2) = intersect_ray_sphere(pi, L, objects[i]);
+                if (s1 > 0 && s1 < length_Pf_Pi)
+                {
+                    shadow = true;
+                }
+                if (s2 > 0 && s2 < length_Pf_Pi)
+                {
+                    shadow = true;
+                }
             }
-            if ((t2 >= t_min && t2 <= t_max) && t2 < closest_t_sphere)
+            if (objects[i].type == "plane")
             {
-                closest_t_sphere = t2;
-                closest_sphere = spheres[i];
+                s1 = intersect_ray_plane(pi, L, objects[i]);
+                if (s1 > 0 && s1 < length_Pf_Pi)
+                {
+                    shadow = true;
+                }
             }
         }
 
-        for (int i = 0; i < planes.size(); i++)
+        return shadow;
+    }
+
+    Color trace_ray(Vector p0, Vector D, double t_min, double t_max, Color pixel_image)
+    {
+        double length_D = length(D);
+        D = Vector(D.x / length_D, D.y / length_D, D.z / length_D);
+        double closest_t_sphere = INFINITY;
+        double closest_t_plane = INFINITY;
+        Object closest_sphere;
+        Object closest_plane;
+        double EPS = 0.01;
+        double t1, t2;
+        for (int i = 0; i < objects.size(); i++)
         {
-            t1 = intersect_ray_plane(p0, D, planes[i]);
-            if ((t1 >= t_min && t1 <= t_max) && t1 < closest_t_plane)
+            if (objects[i].type == "sphere")
             {
-                closest_t_plane = t1;
-                closest_plane = planes[i];
+                tie(t1, t2) = intersect_ray_sphere(p0, D, objects[i]);
+                if ((t1 > t_min && t1 < t_max) && t1 < closest_t_sphere)
+                {
+                    closest_t_sphere = t1;
+                    closest_sphere = objects[i];
+                }
+                if ((t2 > t_min && t2 < t_max) && t2 < closest_t_sphere)
+                {
+                    closest_t_sphere = t2;
+                    closest_sphere = objects[i];
+                }
+            }
+            if (objects[i].type == "plane")
+            {
+                t1 = intersect_ray_plane(p0, D, objects[i]);
+                if ((t1 > t_min && t1 < t_max) && t1 < closest_t_plane)
+                {
+                    closest_t_plane = t1;
+                    closest_plane = objects[i];
+                }
             }
         }
 
@@ -282,54 +356,95 @@ typedef struct Scene
 
         if (closest_t_sphere < closest_t_plane)
         {
-            Vector pi = Vector(p0.x + (D.x * closest_t_sphere), p0.y + (D.y * closest_t_sphere), p0.z + (D.z * closest_t_sphere));
+            double closest_t_sphere_adjusted = closest_t_sphere - EPS;
+            Vector pi = Vector(p0.x + (D.x * closest_t_sphere_adjusted), p0.y + (D.y * closest_t_sphere_adjusted), p0.z + (D.z * closest_t_sphere_adjusted));
             Vector N = Vector(pi.x - closest_sphere.center.x, pi.y - closest_sphere.center.y, pi.z - closest_sphere.center.z);
             N = Vector(N.x / closest_sphere.radius, N.y / closest_sphere.radius, N.z / closest_sphere.radius);
 
-            // Vector(-D.x, -D.y, -D.z) -> É PRA NORMALIZAR? v = -dr/||dr||
-            Vector i = compute_lighting(pi, N, Vector(-D.x, -D.y, -D.z), closest_sphere); // intensidade
+            Vector L = Vector(lights[0].position.x - pi.x, lights[0].position.y - pi.y, lights[0].position.z - pi.z);
+            double length_Pf_Pi = length(L);
+            L = Vector(L.x / length_Pf_Pi, L.y / length_Pf_Pi, L.z / length_Pf_Pi);
 
-            return Color(closest_sphere.bg.r * i.x, closest_sphere.bg.g * i.y, closest_sphere.bg.b * i.z);
+            if (has_shadow(pi, L, length_Pf_Pi))
+            {
+                return Color(255 * (lights[1].intensity.x * closest_sphere.k_a.x), 255 * (lights[1].intensity.y * closest_sphere.k_a.y), 255 * (lights[1].intensity.z * closest_sphere.k_a.z));
+            }
+
+            Vector i = compute_lighting(pi, N, Vector(-D.x, -D.y, -D.z), closest_sphere);
+
+            return Color(255 * i.x, 255 * i.y, 255 * i.z);
         }
 
-        Vector pi = Vector(p0.x + (D.x * closest_t_plane), p0.y + (D.y * closest_t_plane), p0.z + (D.z * closest_t_plane));
+        double closest_t_plane_adjusted = closest_t_plane - EPS;
+
+        Vector pi = Vector(p0.x + (D.x * closest_t_plane_adjusted), p0.y + (D.y * closest_t_plane_adjusted), p0.z + (D.z * closest_t_plane_adjusted));
+
+        Vector L = Vector(lights[0].position.x - pi.x, lights[0].position.y - pi.y, lights[0].position.z - pi.z);
+        double length_Pf_Pi = length(L);
+        L = Vector(L.x / length_Pf_Pi, L.y / length_Pf_Pi, L.z / length_Pf_Pi);
+
+        if (has_shadow(pi, L, length_Pf_Pi))
+        {
+            return Color(255 * (lights[1].intensity.x * closest_plane.k_a.x), 255 * (lights[1].intensity.y * closest_plane.k_a.y), 255 * (lights[1].intensity.z * closest_plane.k_a.z));
+        }
+
         Vector i = compute_lighting(pi, closest_plane.normal, Vector(-D.x, -D.y, -D.z), closest_plane);
 
-        return Color(closest_plane.bg.r * i.x, closest_plane.bg.g * i.y, closest_plane.bg.b * i.z);
+        // return pixel_image;
+        return Color(255 * i.x, 255 * i.y, 255 * i.z);
     }
 } Scene;
 
 int main()
 {
-    Viewport vp(0.6, 0.6, 0.3);
+    Viewport vp(60., 60., 30.);
 
     Canvas canva(500., 500., vp, Color(100, 100, 100));
 
-    vector<Sphere> spheres;
-    vector<Plane> planes;
+    vector<Object> objects;
     vector<Light> lights;
 
-    Sphere sphere1(0.4, Vector(0, 0, -1.), Color(0, 0, 255), 10., Vector(0.7, 0.2, 0.2), Vector(0.7, 0.2, 0.2), Vector(0.7, 0.2, 0.2)); // blue
-    // Sphere sphere2(0.4, Vector(1., 0, -1.), Color(255, 0, 0), 10., Vector(0.7, 0.2, 0.2), Vector(0.7, 0.2, 0.2), Vector(0.7, 0.2, 0.2));  // red
-    // Sphere sphere3(0.4, Vector(-1., 0, -1.), Color(0, 255, 0), 10., Vector(0.7, 0.2, 0.2), Vector(0.7, 0.2, 0.2), Vector(0.7, 0.2, 0.2)); // green
+    Object sphere1("sphere", 40., Vector(0, 0, -100.), 10., Vector(0.7, 0.2, 0.2), Vector(0.7, 0.2, 0.2), Vector(0.7, 0.2, 0.2)); // blue
+    // Sphere sphere2("sphere", 0.4, Vector(1., 0, -1.), Color(255, 0, 0), 10., Vector(0.7, 0.2, 0.2), Vector(0.7, 0.2, 0.2), Vector(0.7, 0.2, 0.2));  // red
+    // Sphere sphere3("sphere", 0.4, Vector(-1., 0, -1.), Color(0, 255, 0), 10., Vector(0.7, 0.2, 0.2), Vector(0.7, 0.2, 0.2), Vector(0.7, 0.2, 0.2)); // green
 
-    spheres.push_back(sphere1);
+    objects.push_back(sphere1);
     // spheres.push_back(sphere2);
     // spheres.push_back(sphere3);
 
-    Plane plane1(Vector(0, -0.4, 0), Vector(0, 1., 0), Color(30., 40., 50.), 1., Vector(0.2, 0.7, 0.2), Vector(0, 0, 0), Vector(0.2, 0.7, 0.2));
-    Plane plane2(Vector(0, 0, -2.), Vector(0, 0, 1.), Color(80., 90., 100.), 1., Vector(0.3, 0.3, 0.7), Vector(0, 0, 0), Vector(0.3, 0.3, 0.7));
+    Object plane1("plane", Vector(0, -40., 0), Vector(0., 1., 0.), 1., Vector(0.2, 0.7, 0.2), Vector(0, 0, 0), Vector(0.2, 0.7, 0.2));
+    Object plane2("plane", Vector(0, 0, -200.), Vector(0., 0., 1.), 1., Vector(0.3, 0.3, 0.7), Vector(0, 0, 0), Vector(0.3, 0.3, 0.7));
 
-    planes.push_back(plane1);
-    planes.push_back(plane2);
+    objects.push_back(plane1);
+    objects.push_back(plane2);
 
-    Light point_light(Vector(0.7, 0.7, 0.7), Vector(0, 0.6, -0.3), "point");
+    Light point_light(Vector(0.7, 0.7, 0.7), Vector(0, 60., -30.), "point");
     Light ambient_light(Vector(0.3, 0.3, 0.3), Vector(0, 0, 0), "ambient");
 
     lights.push_back(point_light);
     lights.push_back(ambient_light);
 
-    Scene scene(spheres, planes, canva, lights);
+    Scene scene(objects, canva, lights);
+
+    int w, h, chan;
+    Color **matrix_image;
+
+    unsigned char *rgb_image = stbi_load("lol.png", &w, &h, &chan, 3);
+    matrix_image = new Color *[h];
+    for (int i = 0; i < h; i++)
+    {
+        matrix_image[i] = new Color[w];
+    }
+    for (int i = 0; i < h; i++)
+    {
+        for (int j = 0; j < w; j++)
+        {
+            matrix_image[i][j].r = (double)rgb_image[j * 3 + w * i * 3];
+            matrix_image[i][j].g = (double)rgb_image[j * 3 + w * i * 3 + 1];
+            matrix_image[i][j].b = (double)rgb_image[j * 3 + w * i * 3 + 2];
+        }
+    }
+    stbi_image_free(rgb_image);
 
     ofstream out("out.ppm");
 
@@ -346,7 +461,9 @@ int main()
         {
             Vector D = canva.canvas_to_viewport(x, y);
 
-            Color color = scene.trace_ray(Vector(0., 0., 0.), D, 1.0, INFINITY);
+            Color pixel_image = matrix_image[y][x];
+
+            Color color = scene.trace_ray(Vector(0., 0., 0.), D, 0.0, INFINITY, pixel_image);
 
             sphere_image[c++] = min((int)color.r, 255);
             sphere_image[c++] = min((int)color.g, 255);
