@@ -171,7 +171,7 @@ int main()
         {
             Vector D = canva.canvas_to_viewport(x, y);
 
-            Color color = scene.trace_ray(Vector(0., 0., 0.), D, 1.0, INFINITY);
+            Color color = scene.trace_ray(Vector(0., 0., 0.), D, 0.0, INFINITY);
 
             sphere_image[c++] = min((int)color.r, 255);
             sphere_image[c++] = min((int)color.g, 255);

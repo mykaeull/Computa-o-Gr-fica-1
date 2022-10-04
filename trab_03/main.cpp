@@ -122,6 +122,7 @@ typedef struct Object
     Vector k_d;
     Vector k_e;
     Vector k_a;
+    string position;
 
     Object(string object_type, double r, Vector c, double s, Vector K_d, Vector K_e, Vector K_a) // Sphere
     {
@@ -134,7 +135,7 @@ typedef struct Object
         k_a = K_a;
     }
 
-    Object(string object_type, Vector P_pi, Vector n, double s, Vector K_d, Vector K_e, Vector K_a) // Plane
+    Object(string object_type, Vector P_pi, Vector n, double s, Vector K_d, Vector K_e, Vector K_a, string object_position) // Plane
     {
         type = object_type;
         p_pi = P_pi;
@@ -143,6 +144,7 @@ typedef struct Object
         k_d = K_d;
         k_e = K_e;
         k_a = K_a;
+        position = object_position;
     }
 
     Object() { radius = -1; }
@@ -386,12 +388,18 @@ typedef struct Scene
         if (has_shadow(pi, L, length_Pf_Pi))
         {
             return Color(255 * (lights[1].intensity.x * closest_plane.k_a.x), 255 * (lights[1].intensity.y * closest_plane.k_a.y), 255 * (lights[1].intensity.z * closest_plane.k_a.z));
+            // return Color(pixel_image.r * (lights[1].intensity.x * closest_plane.k_a.x), pixel_image.g * (lights[1].intensity.y * closest_plane.k_a.y), pixel_image.b * (lights[1].intensity.z * closest_plane.k_a.z));
         }
+
+        // if (closest_plane.position == "background")
+        // {
+        //     return pixel_image;
+        // }
 
         Vector i = compute_lighting(pi, closest_plane.normal, Vector(-D.x, -D.y, -D.z), closest_plane);
 
-        // return pixel_image;
         return Color(255 * i.x, 255 * i.y, 255 * i.z);
+        // return pixel_image;
     }
 } Scene;
 
@@ -412,8 +420,8 @@ int main()
     // spheres.push_back(sphere2);
     // spheres.push_back(sphere3);
 
-    Object plane1("plane", Vector(0, -40., 0), Vector(0., 1., 0.), 1., Vector(0.2, 0.7, 0.2), Vector(0, 0, 0), Vector(0.2, 0.7, 0.2));
-    Object plane2("plane", Vector(0, 0, -200.), Vector(0., 0., 1.), 1., Vector(0.3, 0.3, 0.7), Vector(0, 0, 0), Vector(0.3, 0.3, 0.7));
+    Object plane1("plane", Vector(0, -40., 0), Vector(0., 1., 0.), 1., Vector(0.2, 0.7, 0.2), Vector(0, 0, 0), Vector(0.2, 0.7, 0.2), "floor");
+    Object plane2("plane", Vector(0, 0, -200.), Vector(0., 0., 1.), 1., Vector(0.3, 0.3, 0.7), Vector(0, 0, 0), Vector(0.3, 0.3, 0.7), "background");
 
     objects.push_back(plane1);
     objects.push_back(plane2);
