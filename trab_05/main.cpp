@@ -67,6 +67,29 @@ typedef struct Canvas
     }
 } Canvas;
 
+typedef struct VertexIndex
+{
+    int v1, v2;
+    VertexIndex(int vv1, int vv2)
+    {
+        v1 = vv1;
+        v2 = vv2;
+    }
+    VertexIndex() {}
+} VertexIndex;
+
+typedef struct EdgeIndex
+{
+    int a1, a2, a3;
+    EdgeIndex(int aa1, int aa2, int aa3)
+    {
+        a1 = aa1;
+        a2 = aa2;
+        a3 = aa3;
+    }
+    EdgeIndex() {}
+} EdgeIndex;
+
 typedef struct Object
 {
     string type;
@@ -75,6 +98,10 @@ typedef struct Object
     Vector p_pi;
     Vector normal;
     Vector base;
+    double edge;
+    vector<Vector> LV;
+    vector<VertexIndex> LA;
+    vector<EdgeIndex> LF;
     Vector u; // cylinder
     double h;
     double specular;
@@ -121,7 +148,42 @@ typedef struct Object
         vc = Vector(b.x + (height * uu.x), b.y + (height * uu.y), b.z + (height * uu.z)); // case cone
     }
 
-    Object() { radius = -1; }
+    Object(string object_type, double edge_obj, Vector b, Vector K_d, Vector K_e, Vector K_a) // cube
+    {
+        type = object_type;
+        base = b; // centro da base
+        edge = edge_obj;
+        k_d = K_d;
+        k_e = K_e;
+        k_a = K_a;
+    }
+
+    Object(string object_type, double edge_obj, Vector b, Vector K_d, Vector K_e, Vector K_a, vector<Vector> LV_cube, vector<VertexIndex> LA_cube, vector<EdgeIndex> LF_cube) // cube
+    {
+        type = object_type;
+        base = b; // centro da base
+        edge = edge_obj;
+        k_d = K_d;
+        k_e = K_e;
+        k_a = K_a;
+        LV = LV_cube;
+        LA = LA_cube;
+        LF = LF_cube;
+    }
+
+    Object(string object_type, Vector N, Vector K_d, Vector K_e, Vector K_a)
+    { // face of cube
+        type = object_type;
+        normal = N;
+        k_d = K_d;
+        k_e = K_e;
+        k_a = K_a;
+    }
+
+    Object()
+    {
+        radius = -1;
+    }
 
 } Object;
 
@@ -182,6 +244,16 @@ typedef struct Scene
         return Vector(row1, row2, row3);
     }
 
+    Vector sum_vector(Vector a, Vector b)
+    {
+        return Vector(a.x + b.x, a.y + b.y, a.z + b.z);
+    }
+
+    Vector sub_vector(Vector a, Vector b)
+    {
+        return Vector(a.x - b.x, a.y - b.y, a.z - b.z);
+    }
+
     double calc_insensity(double i, double x, double length_a, double length_b, double specular, double k, int flag)
     {
         if (flag == 0)
@@ -239,6 +311,75 @@ typedef struct Scene
         }
 
         return i;
+    }
+
+    tuple<vector<Vector>, vector<VertexIndex>, vector<EdgeIndex>> cube_maping(Object cube)
+    {
+        Vector centro = Vector(cube.base.x, cube.base.y, cube.base.z);
+        Vector A = Vector(centro.x - (cube.edge / 2.), centro.y - (cube.edge / 2.), centro.z + (cube.edge / 2.));
+        Vector B = Vector(centro.x - (cube.edge / 2.), centro.y - (cube.edge / 2.), centro.z - (cube.edge / 2.));
+        Vector C = Vector(centro.x + (cube.edge / 2.), centro.y - (cube.edge / 2.), centro.z - (cube.edge / 2.));
+        Vector D = Vector(centro.x + (cube.edge / 2.), centro.y - (cube.edge / 2.), centro.z + (cube.edge / 2.));
+        Vector E = Vector(centro.x - (cube.edge / 2.), centro.y + (cube.edge / 2.), centro.z + (cube.edge / 2.));
+        Vector F = Vector(centro.x - (cube.edge / 2.), centro.y + (cube.edge / 2.), centro.z - (cube.edge / 2.));
+        Vector G = Vector(centro.x + (cube.edge / 2.), centro.y + (cube.edge / 2.), centro.z - (cube.edge / 2.));
+        Vector H = Vector(centro.x + (cube.edge / 2.), centro.y + (cube.edge / 2.), centro.z + (cube.edge / 2.));
+        vector<Vector> LV;
+        LV.push_back(A);
+        LV.push_back(B);
+        LV.push_back(C);
+        LV.push_back(D);
+        LV.push_back(E);
+        LV.push_back(F);
+        LV.push_back(G);
+        LV.push_back(H);
+        // for (int i = 0; i < 8; i++)
+        // {
+        //     cout << LV[i].x << "\n";
+        //     cout << LV[i].y << "\n";
+        //     cout << LV[i].z << "\n\n";
+        // }
+        vector<VertexIndex> LA;
+        LA.push_back(VertexIndex(0, 1));
+        LA.push_back(VertexIndex(1, 2));
+        LA.push_back(VertexIndex(2, 3));
+        LA.push_back(VertexIndex(3, 0));
+        LA.push_back(VertexIndex(4, 5));
+        LA.push_back(VertexIndex(5, 6));
+        LA.push_back(VertexIndex(6, 7));
+        LA.push_back(VertexIndex(7, 4));
+        LA.push_back(VertexIndex(0, 4));
+        LA.push_back(VertexIndex(1, 5));
+        LA.push_back(VertexIndex(2, 6));
+        LA.push_back(VertexIndex(3, 7));
+        LA.push_back(VertexIndex(2, 7));
+        LA.push_back(VertexIndex(5, 7));
+        LA.push_back(VertexIndex(5, 2));
+        LA.push_back(VertexIndex(1, 4));
+        LA.push_back(VertexIndex(1, 3));
+        LA.push_back(VertexIndex(3, 4));
+        vector<EdgeIndex> LF;
+        LF.push_back(EdgeIndex(6, 10, 12));
+        LF.push_back(EdgeIndex(12, 2, 11));
+        LF.push_back(EdgeIndex(7, 4, 13));
+        LF.push_back(EdgeIndex(13, 5, 6));
+        LF.push_back(EdgeIndex(5, 14, 10));
+        LF.push_back(EdgeIndex(9, 1, 14));
+        LF.push_back(EdgeIndex(4, 15, 9));
+        LF.push_back(EdgeIndex(8, 0, 15));
+        LF.push_back(EdgeIndex(1, 16, 2));
+        LF.push_back(EdgeIndex(3, 16, 10));
+        LF.push_back(EdgeIndex(11, 17, 7));
+        LF.push_back(EdgeIndex(3, 8, 17));
+        auto t = make_tuple(LV, LA, LF);
+        return t;
+    }
+
+    Object mesh(Object cube)
+    {
+        auto t = cube_maping(cube);
+        Object mesh_cube("cube", cube.edge, cube.base, cube.k_d, cube.k_e, cube.k_a, get<0>(t), get<1>(t), get<2>(t));
+        return mesh_cube;
     }
 
     pair<double, double> intersect_ray_sphere(Vector p0, Vector D, Object sphere)
@@ -364,10 +505,91 @@ typedef struct Scene
         return {t1, t2};
     }
 
+    pair<double, Vector> intersect_ray_cube(Vector p0, Vector D, Object cube)
+    {
+        Object mesh_cube = mesh(cube);
+        int v1, v2, v3;
+        Vector P1, P2, P3;
+        Vector r1, r2;
+        Vector n_face, N_face;
+        Vector Pi;
+        double C1, C2, C3;
+        double t = INFINITY;
+        double closest_t = INFINITY;
+        Vector normal_closest_face;
+        for (int i = 0; i < mesh_cube.LF.size(); i++)
+        {
+            int idA1 = mesh_cube.LF[i].a1;
+            int idA2 = mesh_cube.LF[i].a2;
+            int idA3 = mesh_cube.LF[i].a3;
+
+            int idV11 = mesh_cube.LA[idA1].v1;
+            int idV12 = mesh_cube.LA[idA1].v2;
+            int idV21 = mesh_cube.LA[idA2].v1;
+            int idV22 = mesh_cube.LA[idA2].v2;
+
+            int n1 = idV11 * idV12;
+            // cout << "idA1: " << idA1 << "\n";
+            // cout << "idV11: " << idV11 << "\n";
+            // cout << "idV12: " << idV12 << "\n";
+            // cout << "n1: " << n1 << "\n";
+            int n = n1 == 0 ? 0 : (n1 / idV21); // CONSERTAR
+            if (n == idV11 || n == idV12)
+            {
+                v1 = idV21;
+                v2 = idV22;
+                v3 = n;
+            }
+            else
+            {
+                v1 = idV22;
+                v2 = idV21;
+                v3 = n1 / v1;
+            }
+
+            P1.x = mesh_cube.LV[v1].x;
+            P1.y = mesh_cube.LV[v1].y;
+            P1.z = mesh_cube.LV[v1].z;
+
+            P2.x = mesh_cube.LV[v2].x;
+            P2.y = mesh_cube.LV[v2].y;
+            P2.z = mesh_cube.LV[v2].z;
+
+            P3.x = mesh_cube.LV[v3].x;
+            P3.y = mesh_cube.LV[v3].y;
+            P3.z = mesh_cube.LV[v3].z;
+
+            r1 = sub_vector(P2, P1);
+            r2 = sub_vector(P3, P1);
+
+            N_face = vector_mult(r1, r2);
+            double N_length = length(N_face);
+            n_face = Vector(N_face.x / N_length, N_face.y / N_length, N_face.z / N_length);
+
+            t = -(dot(sub_vector(p0, P1), n_face)) / dot(D, n_face);
+            Pi = Vector(p0.x + (t * D.x), p0.y + (t * D.y), p0.z + (t * D.z));
+            C1 = (dot(vector_mult(sub_vector(P3, Pi), sub_vector(P1, Pi)), n_face)) / dot(N_face, n_face);
+            C2 = (dot(vector_mult(sub_vector(P1, Pi), sub_vector(P2, Pi)), n_face)) / dot(N_face, n_face);
+            C3 = (dot(vector_mult(sub_vector(P2, Pi), sub_vector(P3, Pi)), n_face)) / dot(N_face, n_face);
+
+            if ((C1 + C2 + C3) == 1. && (C1 >= 0 && C2 >= 0 && C3 >= 0))
+            {
+                if (closest_t > t)
+                {
+                    closest_t = t;
+                    normal_closest_face = n_face;
+                }
+            }
+        }
+
+        return {closest_t, normal_closest_face};
+    }
+
     bool has_shadow(Vector pi, Vector L, double length_Pf_Pi)
     {
         bool shadow = false;
         double s1, s2;
+        Vector normal_face;
 
         for (int i = 0; i < objects.size(); i++)
         {
@@ -415,6 +637,14 @@ typedef struct Scene
                     shadow = true;
                 }
             }
+            if (objects[i].type == "cube")
+            {
+                tie(s1, normal_face) = intersect_ray_cube(pi, L, objects[i]);
+                if (s1 > 0 && s1 < length_Pf_Pi)
+                {
+                    shadow = true;
+                }
+            }
         }
 
         return shadow;
@@ -449,6 +679,10 @@ typedef struct Scene
             double N_length = length(N);
             N = Vector(N.x / N_length, N.y / N_length, N.z / N_length);
         }
+        if (object.type == "cube")
+        {
+            N = object.normal;
+        }
 
         Vector L = Vector(lights[0].position.x - pi.x, lights[0].position.y - pi.y, lights[0].position.z - pi.z);
         double length_Pf_Pi = length(L);
@@ -472,12 +706,15 @@ typedef struct Scene
         double closest_t_plane = INFINITY;
         double closest_t_cylinder = INFINITY;
         double closest_t_cone = INFINITY;
+        double closest_t_cube = INFINITY;
         Object closest_sphere;
         Object closest_plane;
         Object closest_cylinder;
         Object closest_cone;
+        Object closest_cube;
         double EPS = 0.01;
         double t1, t2;
+        Vector normal_face;
         for (int i = 0; i < objects.size(); i++)
         {
             if (objects[i].type == "sphere")
@@ -559,9 +796,19 @@ typedef struct Scene
                     closest_cone = plane_base;
                 }
             }
+            if (objects[i].type == "cube")
+            {
+                tie(t1, normal_face) = intersect_ray_cube(p0, D, objects[i]);
+                if ((t1 > t_min && t1 < t_max) && t1 < closest_t_cone)
+                {
+                    closest_t_cube = t1;
+                    Object cube_face("cube", normal_face, objects[i].k_d, objects[i].k_e, objects[i].k_a);
+                    closest_cube = cube_face;
+                }
+            }
         }
 
-        if (closest_t_sphere == INFINITY && closest_t_plane == INFINITY && closest_t_cylinder == INFINITY && closest_t_cone == INFINITY)
+        if (closest_t_sphere == INFINITY && closest_t_plane == INFINITY && closest_t_cylinder == INFINITY && closest_t_cone == INFINITY && closest_t_cube == INFINITY)
         {
             return canva.bg;
         }
@@ -571,6 +818,7 @@ typedef struct Scene
         closest_objects.push_back(Closest_Object(closest_t_plane, closest_plane));
         closest_objects.push_back(Closest_Object(closest_t_cylinder, closest_cylinder));
         closest_objects.push_back(Closest_Object(closest_t_cone, closest_cone));
+        closest_objects.push_back(Closest_Object(closest_t_cube, closest_cube));
 
         double smaller = INFINITY;
         double closest_t;
@@ -620,6 +868,9 @@ int main()
 
     Object sphere1("sphere", 5., Vector(0, 95, -200.), 10., Vector(0.854, 0.647, 0.125), Vector(0.854, 0.647, 0.125), Vector(0.854, 0.647, 0.125));
     objects.push_back(sphere1);
+
+    Object cube("cube", 40., Vector(0, -150., -165.), Vector(1., 0.078, 0.576), Vector(1., 0.078, 0.576), Vector(1., 0.078, 0.576));
+    objects.push_back(cube);
 
     Light point_light(Vector(0.7, 0.7, 0.7), Vector(-100, 140., -20.), "point");
     Light ambient_light(Vector(0.3, 0.3, 0.3), Vector(0, 0, 0), "ambient");
