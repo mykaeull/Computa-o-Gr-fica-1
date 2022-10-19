@@ -333,12 +333,6 @@ typedef struct Scene
         LV.push_back(F);
         LV.push_back(G);
         LV.push_back(H);
-        // for (int i = 0; i < 8; i++)
-        // {
-        //     cout << LV[i].x << "\n";
-        //     cout << LV[i].y << "\n";
-        //     cout << LV[i].z << "\n\n";
-        // }
         vector<VertexIndex> LA;
         LA.push_back(VertexIndex(0, 1));
         LA.push_back(VertexIndex(1, 2));
@@ -517,23 +511,20 @@ typedef struct Scene
         double t = INFINITY;
         double closest_t = INFINITY;
         Vector normal_closest_face;
+        double EPS = 0.0000001;
         for (int i = 0; i < mesh_cube.LF.size(); i++)
         {
             int idA1 = mesh_cube.LF[i].a1;
             int idA2 = mesh_cube.LF[i].a2;
             int idA3 = mesh_cube.LF[i].a3;
 
-            int idV11 = mesh_cube.LA[idA1].v1;
-            int idV12 = mesh_cube.LA[idA1].v2;
-            int idV21 = mesh_cube.LA[idA2].v1;
-            int idV22 = mesh_cube.LA[idA2].v2;
+            int idV11 = mesh_cube.LA[idA1].v1 + 1;
+            int idV12 = mesh_cube.LA[idA1].v2 + 1;
+            int idV21 = mesh_cube.LA[idA2].v1 + 1;
+            int idV22 = mesh_cube.LA[idA2].v2 + 1;
 
             int n1 = idV11 * idV12;
-            // cout << "idA1: " << idA1 << "\n";
-            // cout << "idV11: " << idV11 << "\n";
-            // cout << "idV12: " << idV12 << "\n";
-            // cout << "n1: " << n1 << "\n";
-            int n = n1 == 0 ? 0 : (n1 / idV21); // CONSERTAR
+            int n = n1 / idV21;
             if (n == idV11 || n == idV12)
             {
                 v1 = idV21;
@@ -546,6 +537,10 @@ typedef struct Scene
                 v2 = idV21;
                 v3 = n1 / v1;
             }
+
+            v1 = v1 - 1;
+            v2 = v2 - 1;
+            v3 = v3 - 1;
 
             P1.x = mesh_cube.LV[v1].x;
             P1.y = mesh_cube.LV[v1].y;
@@ -572,7 +567,7 @@ typedef struct Scene
             C2 = (dot(vector_mult(sub_vector(P1, Pi), sub_vector(P2, Pi)), n_face)) / dot(N_face, n_face);
             C3 = (dot(vector_mult(sub_vector(P2, Pi), sub_vector(P3, Pi)), n_face)) / dot(N_face, n_face);
 
-            if ((C1 + C2 + C3) == 1. && (C1 >= 0 && C2 >= 0 && C3 >= 0))
+            if (C1 >= 0. - EPS && C2 >= 0. - EPS && C3 >= 0. - EPS)
             {
                 if (closest_t > t)
                 {
@@ -650,7 +645,7 @@ typedef struct Scene
         return shadow;
     }
 
-    Color define_color(double closest_t, Object object, Vector p0, Vector D)
+    Color define_color(double closest_t, Object object, Vector p0, Vector D, Color pixel_image)
     {
         Vector pi = Vector(p0.x + (D.x * closest_t), p0.y + (D.y * closest_t), p0.z + (D.z * closest_t));
         Vector N;
@@ -690,15 +685,30 @@ typedef struct Scene
 
         if (has_shadow(pi, L, length_Pf_Pi))
         {
+            if (object.type == "plane")
+            {
+                if (object.position == "floor")
+                {
+                    return Color(pixel_image.r * (lights[1].intensity.x * object.k_a.x), pixel_image.g * (lights[1].intensity.y * object.k_a.y), pixel_image.b * (lights[1].intensity.z * object.k_a.z));
+                }
+            }
             return Color(255 * (lights[1].intensity.x * object.k_a.x), 255 * (lights[1].intensity.y * object.k_a.y), 255 * (lights[1].intensity.z * object.k_a.z));
         }
 
         Vector i = compute_lighting(pi, N, Vector(-D.x, -D.y, -D.z), object);
 
+        if (object.type == "plane")
+        {
+            if (object.position == "floor")
+            {
+                return Color(pixel_image.r * i.x, pixel_image.g * i.y, pixel_image.b * i.z);
+            }
+        }
+
         return Color(255 * i.x, 255 * i.y, 255 * i.z);
     }
 
-    Color trace_ray(Vector p0, Vector D, double t_min, double t_max)
+    Color trace_ray(Vector p0, Vector D, double t_min, double t_max, Color pixel_image)
     {
         double length_D = length(D);
         D = Vector(D.x / length_D, D.y / length_D, D.z / length_D);
@@ -833,7 +843,7 @@ typedef struct Scene
             }
         }
 
-        return define_color(closest_t - EPS, closest_object, p0, D);
+        return define_color(closest_t - EPS, closest_object, p0, D, pixel_image);
     }
 } Scene;
 
@@ -849,10 +859,10 @@ int main()
     double raio = 40.;
 
     Object plane1("plane", Vector(0, -150, 0), Vector(0., 1., 0.), 1., Vector(0.933, 0.933, 0.933), Vector(0.933, 0.933, 0.933), Vector(0.933, 0.933, 0.933), "floor");
-    Object plane2("plane", Vector(200, -150, 0), Vector(-1., 0., 0.), 1., Vector(0.686, 0.933, 0.933), Vector(0.686, 0.933, 0.933), Vector(0.686, 0.933, 0.933), "background");
-    Object plane3("plane", Vector(200, -150, -400), Vector(0., 0., 1.), 1., Vector(0.686, 0.933, 0.933), Vector(0.686, 0.933, 0.933), Vector(0.686, 0.933, 0.933), "floor");
-    Object plane4("plane", Vector(-200, -150, 0), Vector(1., 0., 0.), 1., Vector(0.686, 0.933, 0.933), Vector(0.686, 0.933, 0.933), Vector(0.686, 0.933, 0.933), "floor");
-    Object plane5("plane", Vector(0, 150, 0), Vector(0., -1., 0.), 1., Vector(0.933, 0.933, 0.933), Vector(0.933, 0.933, 0.933), Vector(0.933, 0.933, 0.933), "floor");
+    Object plane2("plane", Vector(200, -150, 0), Vector(-1., 0., 0.), 1., Vector(0.686, 0.933, 0.933), Vector(0.686, 0.933, 0.933), Vector(0.686, 0.933, 0.933), "right");
+    Object plane3("plane", Vector(200, -150, -400), Vector(0., 0., 1.), 1., Vector(0.686, 0.933, 0.933), Vector(0.686, 0.933, 0.933), Vector(0.686, 0.933, 0.933), "front");
+    Object plane4("plane", Vector(-200, -150, 0), Vector(1., 0., 0.), 1., Vector(0.686, 0.933, 0.933), Vector(0.686, 0.933, 0.933), Vector(0.686, 0.933, 0.933), "left");
+    Object plane5("plane", Vector(0, 150, 0), Vector(0., -1., 0.), 1., Vector(0.933, 0.933, 0.933), Vector(0.933, 0.933, 0.933), Vector(0.933, 0.933, 0.933), "ceil");
 
     objects.push_back(plane1);
     objects.push_back(plane2);
@@ -880,6 +890,27 @@ int main()
 
     Scene scene(objects, canva, lights);
 
+    int w, h, chan;
+    Color **matrix_image;
+
+    unsigned char *image = stbi_load("madeira.png", &w, &h, &chan, 3);
+    matrix_image = new Color *[h];
+    for (int i = 0; i < h; i++)
+    {
+        matrix_image[i] = new Color[w];
+    }
+    for (int i = 0; i < h; i++)
+    {
+        for (int j = 0; j < w; j++)
+        {
+            matrix_image[i][j].r = (double)image[j * 3 + w * i * 3];
+            matrix_image[i][j].g = (double)image[j * 3 + w * i * 3 + 1];
+            matrix_image[i][j].b = (double)image[j * 3 + w * i * 3 + 2];
+        }
+    }
+
+    stbi_image_free(image);
+
     ofstream out("out.ppm");
 
     out << "P3";
@@ -895,7 +926,9 @@ int main()
         {
             Vector D = canva.canvas_to_viewport(x, y);
 
-            Color color = scene.trace_ray(Vector(0., 0., 0.), D, 0.0, INFINITY);
+            Color pixel_image = matrix_image[y % h][x % w];
+
+            Color color = scene.trace_ray(Vector(0., 0., 20.), D, 0.0, INFINITY, pixel_image);
 
             rgb_image[c++] = min((int)color.r, 255);
             rgb_image[c++] = min((int)color.g, 255);
