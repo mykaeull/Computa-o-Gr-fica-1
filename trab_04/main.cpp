@@ -456,9 +456,9 @@ typedef struct Scene
             N = vector_mult(n_barra, w);
             double N_length = length(N);
             N = Vector(N.x / N_length, N.y / N_length, N.z / N_length);
-            if (teste == 0)
-                // cout << t1 << " " << t2 << "\n", teste = 1;
-                cout << N.x << " " << N.y << " " << N.z << "\n", teste = 1;
+            // if (teste == 0)
+            //     // cout << t1 << " " << t2 << "\n", teste = 1;
+            //     cout << N.x << " " << N.y << " " << N.z << "\n", teste = 1;
         }
 
         Vector L = Vector(lights[0].position.x - pi.x, lights[0].position.y - pi.y, lights[0].position.z - pi.z);
