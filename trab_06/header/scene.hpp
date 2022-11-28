@@ -149,13 +149,6 @@ typedef struct Scene
         return i;
     }
 
-    // Object mesh(Object cube)
-    // {
-    //     auto t = cube_maping(cube);
-    //     Object mesh_cube("cube", cube.edge, cube.specular, cube.base, cube.k_d, cube.k_e, cube.k_a, get<0>(t), get<1>(t), get<2>(t));
-    //     return mesh_cube;
-    // }
-
     pair<double, double> intersect_ray_sphere(Vector p0, Vector D, Object sphere)
     {
         double r = sphere.radius;

@@ -192,22 +192,38 @@ vector<vector<double>> matrix_scale(double x, double y, double z)
     return mult_matrix(M_Scale, matrix_I());
 }
 
-// vector<vector<double>> matrices_transform(vector<vector<vector<double>>> matrix_list)
-// {
-//     vector<vector<double>> M;
+void transform_plane(Object *plane, vector<vector<double>> M)
+{
+    plane->p_pi = transform_W_to_C(M, plane->p_pi, 1);
+    plane->normal = norm_vector(transform_W_to_C(M, plane->normal, 0));
+}
 
-//     M.push_back({1., 0., 0., 0.});
-//     M.push_back({0., 1., 0., 0.});
-//     M.push_back({0., 0., 1., 0.});
-//     M.push_back({0., 0., 0., 1.});
+void transform_cylinder(Object *cylinder, vector<vector<double>> M)
+{
+    cylinder->base = transform_W_to_C(M, cylinder->base, 1);
+    cylinder->u = norm_vector(transform_W_to_C(M, cylinder->u, 0));
+}
 
-//     for (int i = 0; i < matrix_list.size(); i++)
-//     {
-//         M = mult_matrix(matrix_list[i], M);
-//     }
+void transform_cone(Object *cone, vector<vector<double>> M)
+{
+    cone->base = transform_W_to_C(M, cone->base, 1);
+    cone->u = norm_vector(transform_W_to_C(M, cone->u, 0));
+    cone->vc = transform_W_to_C(M, cone->vc, 1);
+}
 
-//     return M;
-// }
+void transform_sphere(Object *sphere, vector<vector<double>> M)
+{
+    sphere->center = transform_W_to_C(M, sphere->center, 1);
+}
+
+void transform_cube(Object *cube, vector<vector<double>> M)
+{
+    cube->base = transform_W_to_C(M, cube->base, 1);
+    for (int i = 0; i < 8; i++)
+    {
+        cube->LV[i] = transform_W_to_C(M, cube->LV[i], 1);
+    }
+}
 
 int main()
 {
@@ -220,70 +236,60 @@ int main()
     vector<Light> lights;
 
     vector<vector<double>> M_C_to_W;
-    vector<vector<double>> M_translatef;
-    vector<vector<double>> M_rotation;
-    vector<vector<double>> M_scale;
 
     Vector O = Vector(0., 0., 0., 1);
 
     M_C_to_W = matrix_C_to_W(O, Vector(0, -60, -200, 0), Vector(0., 100., 0., 1));
-    M_translatef = matrix_translatef(60., -150., -165., Vector(0, -150., -165., 1.));
-    M_rotation = matrix_rotation("z", 3.141592 / 4.);
-    // matrix_list.push_back(matrix_scale(2., 2., 1.));
 
-    // vector<vector<double>> M_I;
+    Object *plane1 = new Object("plane", Vector(0, -150, 0, 1), Vector(0., 1., 0., 0), 1., Vector(0.933, 0.933, 0.933, 0), Vector(0.933, 0.933, 0.933, 0), Vector(0.933, 0.933, 0.933, 0), "floor");
+    transform_plane(plane1, M_C_to_W);
+    Object *plane2 = new Object("plane", Vector(200, -150, 0, 1), Vector(-1., 0., 0., 0), 1., Vector(0.686, 0.933, 0.933, 0), Vector(0.686, 0.933, 0.933, 0), Vector(0.686, 0.933, 0.933, 0), "right");
+    transform_plane(plane2, M_C_to_W);
+    Object *plane3 = new Object("plane", Vector(200, -150, -400, 1), Vector(0., 0., 1., 0), 1., Vector(0.686, 0.933, 0.933, 0), Vector(0.686, 0.933, 0.933, 0), Vector(0.686, 0.933, 0.933, 0), "front");
+    transform_plane(plane3, M_C_to_W);
+    Object *plane4 = new Object("plane", Vector(-200, -150, 0, 1), Vector(1., 0., 0., 0), 1., Vector(0.686, 0.933, 0.933, 0), Vector(0.686, 0.933, 0.933, 0), Vector(0.686, 0.933, 0.933, 0), "left");
+    transform_plane(plane4, M_C_to_W);
+    Object *plane5 = new Object("plane", Vector(0, 150, 0, 1), Vector(0., -1., 0., 0), 1., Vector(0.933, 0.933, 0.933, 0), Vector(0.933, 0.933, 0.933, 0), Vector(0.933, 0.933, 0.933, 0), "ceil");
+    transform_plane(plane5, M_C_to_W);
 
-    // M_I = mult_matrix(matrix_C_to_W(O, Vector(0, -60, -200, 0), Vector(0., 100., 0., 1)), I);
+    objects.push_back(*plane1);
+    objects.push_back(*plane2);
+    objects.push_back(*plane3);
+    objects.push_back(*plane4);
+    objects.push_back(*plane5);
 
-    Object plane1("plane", transform_W_to_C(M_C_to_W, Vector(0, -150, 0, 1), 1), norm_vector(transform_W_to_C(M_C_to_W, Vector(0., 1., 0., 0), 0)), 1., Vector(0.933, 0.933, 0.933, 0), Vector(0.933, 0.933, 0.933, 0), Vector(0.933, 0.933, 0.933, 0), "floor");
-    Object plane2("plane", transform_W_to_C(M_C_to_W, Vector(200, -150, 0, 1), 1), norm_vector(transform_W_to_C(M_C_to_W, Vector(-1., 0., 0., 0), 0)), 1., Vector(0.686, 0.933, 0.933, 0), Vector(0.686, 0.933, 0.933, 0), Vector(0.686, 0.933, 0.933, 0), "right");
-    Object plane3("plane", transform_W_to_C(M_C_to_W, Vector(200, -150, -400, 1), 1), norm_vector(transform_W_to_C(M_C_to_W, Vector(0., 0., 1., 0), 0)), 1., Vector(0.686, 0.933, 0.933, 0), Vector(0.686, 0.933, 0.933, 0), Vector(0.686, 0.933, 0.933, 0), "front");
-    Object plane4("plane", transform_W_to_C(M_C_to_W, Vector(-200, -150, 0, 1), 1), norm_vector(transform_W_to_C(M_C_to_W, Vector(1., 0., 0., 0), 0)), 1., Vector(0.686, 0.933, 0.933, 0), Vector(0.686, 0.933, 0.933, 0), Vector(0.686, 0.933, 0.933, 0), "left");
-    Object plane5("plane", transform_W_to_C(M_C_to_W, Vector(0, 150, 0, 1), 1), norm_vector(transform_W_to_C(M_C_to_W, Vector(0., -1., 0., 0), 0)), 1., Vector(0.933, 0.933, 0.933, 0), Vector(0.933, 0.933, 0.933, 0), Vector(0.933, 0.933, 0.933, 0), "ceil");
+    Object *cylinder1 = new Object("cylinder", 5., Vector(0, -150, -200., 1.), 90., Vector(0, 1., 0, 0), 10., Vector(0.824, 0.706, 0.549, 0), Vector(0.824, 0.706, 0.549, 0), Vector(0.824, 0.706, 0.549, 0));
+    transform_cylinder(cylinder1, M_C_to_W);
+    objects.push_back(*cylinder1);
 
-    objects.push_back(plane1);
-    objects.push_back(plane2);
-    objects.push_back(plane3);
-    objects.push_back(plane4);
-    objects.push_back(plane5);
+    Object *cone1 = new Object("cone", 90, Vector(0, -60, -200, 1.), 150, Vector(0, 1., 0, 0), 10., Vector(0., 1., 0.498, 0), Vector(0., 1., 0.498, 0), Vector(0., 1., 0.498, 0));
+    transform_cone(cone1, M_C_to_W);
+    objects.push_back(*cone1);
 
-    Object cylinder1("cylinder", 5., transform_W_to_C(M_C_to_W, Vector(0, -150, -200., 1.), 1), 90., norm_vector(transform_W_to_C(M_C_to_W, Vector(0, 1., 0, 0), 0)), 10., Vector(0.824, 0.706, 0.549, 0), Vector(0.824, 0.706, 0.549, 0), Vector(0.824, 0.706, 0.549, 0));
-    objects.push_back(cylinder1);
+    Object *sphere1 = new Object("sphere", 5., Vector(0, 95, -200., 1.), 10., Vector(0.854, 0.647, 0.125, 0), Vector(0.854, 0.647, 0.125, 0), Vector(0.854, 0.647, 0.125, 0));
+    transform_sphere(sphere1, M_C_to_W);
+    objects.push_back(*sphere1);
 
-    Object cone1("cone", 90, Vector(0, -60, -200, 1.), 150, Vector(0, 1., 0, 0), 10., Vector(0., 1., 0.498, 0), Vector(0., 1., 0.498, 0), Vector(0., 1., 0.498, 0));
-    cone1.base = transform_W_to_C(M_C_to_W, cone1.base, 1);
-    cone1.u = norm_vector(transform_W_to_C(M_C_to_W, cone1.u, 0));
-    cone1.vc = transform_W_to_C(M_C_to_W, cone1.vc, 1);
-    objects.push_back(cone1);
+    Object *cube = new Object("cube", 40., 10., Vector(0, -150., -165., 1.), Vector(1., 0.078, 0.576, 0), Vector(1., 0.078, 0.576, 0), Vector(1., 0.078, 0.576, 0));
+    transform_cube(cube, matrix_rotation("z", 3.141592 / 4.));
+    transform_cube(cube, matrix_scale(1., 1., 1.));
+    transform_cube(cube, matrix_translatef(60, 20, -200, cube->base));
+    transform_cube(cube, M_C_to_W);
+    objects.push_back(*cube);
 
-    Object sphere1("sphere", 5., transform_W_to_C(M_C_to_W, Vector(0, 95, -200., 1.), 1), 10., Vector(0.854, 0.647, 0.125, 0), Vector(0.854, 0.647, 0.125, 0), Vector(0.854, 0.647, 0.125, 0));
-    objects.push_back(sphere1);
-
-    Object cube("cube", 40., 10., Vector(0, -150., -165., 1.), Vector(1., 0.078, 0.576, 0), Vector(1., 0.078, 0.576, 0), Vector(1., 0.078, 0.576, 0));
-    cube.base = transform_W_to_C(M_C_to_W, transform_W_to_C(M_rotation, cube.base, 1), 1);
-    cube.LV[0] = transform_W_to_C(M_C_to_W, transform_W_to_C(M_rotation, cube.LV[0], 1), 1);
-    cube.LV[1] = transform_W_to_C(M_C_to_W, transform_W_to_C(M_rotation, cube.LV[1], 1), 1);
-    cube.LV[2] = transform_W_to_C(M_C_to_W, transform_W_to_C(M_rotation, cube.LV[2], 1), 1);
-    cube.LV[3] = transform_W_to_C(M_C_to_W, transform_W_to_C(M_rotation, cube.LV[3], 1), 1);
-    cube.LV[4] = transform_W_to_C(M_C_to_W, transform_W_to_C(M_rotation, cube.LV[4], 1), 1);
-    cube.LV[5] = transform_W_to_C(M_C_to_W, transform_W_to_C(M_rotation, cube.LV[5], 1), 1);
-    cube.LV[6] = transform_W_to_C(M_C_to_W, transform_W_to_C(M_rotation, cube.LV[6], 1), 1);
-    cube.LV[7] = transform_W_to_C(M_C_to_W, transform_W_to_C(M_rotation, cube.LV[7], 1), 1);
-    objects.push_back(cube);
-
-    Light point_light(Vector(0.7, 0.7, 0.7, 0), transform_W_to_C(M_C_to_W, Vector(-100, 140., -20., 1.), 1), "point");
-    Light ambient_light(Vector(0.3, 0.3, 0.3, 0), Vector(0, 0, 0, 0), "ambient");
-    Light directional_light(Vector(0.5, 0.5, 0.5, 0), norm_vector(transform_W_to_C(M_C_to_W, Vector(0, -150., -165., 0), 0)), "directional");
-    Light spot_light(Vector(0.7, 0.7, 0.7, 0), transform_W_to_C(M_C_to_W, Vector(0, 140, 0, 1.), 1), norm_vector(transform_W_to_C(M_C_to_W, Vector(0, -150., -165., 0), 0)), 0.5, "spot");
+    Light *point_light = new Light(Vector(0.7, 0.7, 0.7, 0), transform_W_to_C(M_C_to_W, Vector(-100, 140., -20., 1.), 1), "point");
+    Light *ambient_light = new Light(Vector(0.3, 0.3, 0.3, 0), Vector(0, 0, 0, 0), "ambient");
+    Light *directional_light = new Light(Vector(0.5, 0.5, 0.5, 0), norm_vector(transform_W_to_C(M_C_to_W, Vector(0, -150., -165., 0), 0)), "directional");
+    Light *spot_light = new Light(Vector(0.7, 0.7, 0.7, 0), transform_W_to_C(M_C_to_W, Vector(0, 140, 0, 1.), 1), norm_vector(transform_W_to_C(M_C_to_W, Vector(0, -150., -165., 0), 0)), 0.5, "spot");
 
     // Vector test = transform_W_to_C(M_rotation, Vector(20., 20., 20., 1.), 1);
 
     // cout << test.x << " " << test.y << " " << test.z << " " << test.w << "\n";
 
-    lights.push_back(point_light);
-    lights.push_back(ambient_light);
-    // lights.push_back(directional_light);
-    // lights.push_back(spot_light);
+    lights.push_back(*point_light);
+    lights.push_back(*ambient_light);
+    // lights.push_back(*directional_light);
+    // lights.push_back(*spot_light);
 
     Scene scene(objects, canva, lights);
 
