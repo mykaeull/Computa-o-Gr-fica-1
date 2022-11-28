@@ -1,4 +1,12 @@
 #include <bits/stdc++.h>
+#include "./header/vector.hpp"
+#include "./header/viewport.hpp"
+#include "./header/color.hpp"
+#include "./header/canvas.hpp"
+#include "./header/mesh_struct.hpp"
+#include "./header/objects.hpp"
+#include "./header/lights.hpp"
+#include "./header/scene.hpp"
 
 #define STB_IMAGE_IMPLEMENTATION
 #define STB_IMAGE_WRITE_IMPLEMENTATION
@@ -11,901 +19,195 @@ typedef unsigned char int8;
 
 using namespace std;
 
-int teste = 0;
-
-typedef struct Vector
+double dot(Vector a, Vector b)
 {
-    double x, y, z;
+    return (a.x * b.x) + (a.y * b.y) + (a.z * b.z) + (a.w * b.w);
+}
 
-    Vector(double xx, double yy, double zz)
-    {
-        x = xx, y = yy, z = zz;
-    }
-    Vector() {}
-} Vector;
-
-typedef struct Viewport
+Vector vector_mult(Vector a, Vector b, bool p)
 {
-    double w, h, d;
+    double row1 = (a.y * b.z) - (a.z * b.y);
+    double row2 = (a.z * b.x) - (a.x * b.z);
+    double row3 = (a.x * b.y) - (a.y * b.x);
+    double x = p == 0 ? 0 : 1; // 0: vetor; 1: ponto
+    return Vector(row1, row2, row3, x);
+}
 
-    Viewport(double vw, double vh, double vd)
-    {
-        w = vw, h = vh, d = vd;
-    }
-    Viewport() {}
-} Viewport;
-
-typedef struct Color
+Vector sum_vector(Vector a, Vector b, bool p)
 {
-    double r, g, b;
+    double x = p == 0 ? 0 : 1; // 0: vetor; 1: ponto
+    return Vector(a.x + b.x, a.y + b.y, a.z + b.z, x);
+}
 
-    Color(double rr, double gg, double bb)
-    {
-        r = rr, g = gg, b = bb;
-    }
-    Color() {}
-} Color;
-
-typedef struct Canvas
+Vector sub_vector(Vector a, Vector b, bool p)
 {
-    double w, h, dx, dy;
-    Viewport vp;
-    Color bg;
+    double x = p == 0 ? 0 : 1; // 0: vetor; 1: ponto
+    return Vector(a.x - b.x, a.y - b.y, a.z - b.z, x);
+}
 
-    Canvas(double wc, double hc, Viewport vpc, Color bgc)
-    {
-        w = wc, h = hc;
-        dx = vpc.w / wc, dy = vpc.h / hc;
-        vp = vpc;
-        bg = bgc;
-    }
-    Canvas() {}
-
-    Vector canvas_to_viewport(double x, double y)
-    {
-        return Vector(-vp.w / 2. + dx / 2. + dx * x, vp.h / 2. - dy / 2. - dy * y, -vp.d);
-    }
-} Canvas;
-
-typedef struct VertexIndex
+double length(Vector v)
 {
-    int v1, v2;
-    VertexIndex(int vv1, int vv2)
-    {
-        v1 = vv1;
-        v2 = vv2;
-    }
-    VertexIndex() {}
-} VertexIndex;
+    return sqrt((v.x * v.x) + (v.y * v.y) + (v.z * v.z));
+}
 
-typedef struct EdgeIndex
+Vector norm_vector(Vector v)
 {
-    int a1, a2, a3;
-    EdgeIndex(int aa1, int aa2, int aa3)
-    {
-        a1 = aa1;
-        a2 = aa2;
-        a3 = aa3;
-    }
-    EdgeIndex() {}
-} EdgeIndex;
+    double length_v = length(v);
+    return Vector(v.x / length_v, v.y / length_v, v.z / length_v, 0);
+}
 
-typedef struct Object
+vector<vector<double>> matrix_I()
 {
-    string type;
-    double radius;
-    Vector center;
-    Vector p_pi;
-    Vector normal;
-    Vector base;
-    double edge;
-    vector<Vector> LV;
-    vector<VertexIndex> LA;
-    vector<EdgeIndex> LF;
-    Vector u; // cylinder
-    double h;
-    double specular;
-    Vector k_d;
-    Vector k_e;
-    Vector k_a;
-    string position;
-    Vector vc;
+    vector<vector<double>> I;
 
-    Object(string object_type, double r, Vector c, double s, Vector K_d, Vector K_e, Vector K_a) // Sphere
-    {
-        type = object_type;
-        radius = r;
-        center = c;
-        specular = s;
-        k_d = K_d;
-        k_e = K_e;
-        k_a = K_a;
-    }
+    I.push_back({1., 0., 0., 0.});
+    I.push_back({0., 1., 0., 0.});
+    I.push_back({0., 0., 1., 0.});
+    I.push_back({0., 0., 0., 1.});
 
-    Object(string object_type, Vector P_pi, Vector n, double s, Vector K_d, Vector K_e, Vector K_a, string object_position) // Plane
-    {
-        type = object_type;
-        p_pi = P_pi;
-        normal = n;
-        specular = s;
-        k_d = K_d;
-        k_e = K_e;
-        k_a = K_a;
-        position = object_position;
-    }
+    return I;
+}
 
-    Object(string object_type, double r, Vector b, double height, Vector uu, double s, Vector K_d, Vector K_e, Vector K_a) // cylinder or cone
-    {
-        type = object_type;
-        radius = r;
-        base = b; // centro da base
-        h = height;
-        u = uu;
-        specular = s;
-        k_d = K_d;
-        k_e = K_e;
-        k_a = K_a;
-        vc = Vector(b.x + (height * uu.x), b.y + (height * uu.y), b.z + (height * uu.z)); // case cone
-    }
-
-    Object(string object_type, double edge_obj, double s, Vector b, Vector K_d, Vector K_e, Vector K_a) // cube
-    {
-        type = object_type;
-        base = b; // centro da base
-        edge = edge_obj;
-        specular = s;
-        k_d = K_d;
-        k_e = K_e;
-        k_a = K_a;
-    }
-
-    Object(string object_type, double edge_obj, double s, Vector b, Vector K_d, Vector K_e, Vector K_a, vector<Vector> LV_cube, vector<VertexIndex> LA_cube, vector<EdgeIndex> LF_cube) // cube
-    {
-        type = object_type;
-        base = b; // centro da base
-        edge = edge_obj;
-        specular = s;
-        k_d = K_d;
-        k_e = K_e;
-        k_a = K_a;
-        LV = LV_cube;
-        LA = LA_cube;
-        LF = LF_cube;
-    }
-
-    Object(string object_type, double s, Vector N, Vector K_d, Vector K_e, Vector K_a)
-    { // face of cube
-        type = object_type;
-        normal = N;
-        specular = s;
-        k_d = K_d;
-        k_e = K_e;
-        k_a = K_a;
-    }
-
-    Object()
-    {
-        radius = -1;
-    }
-
-} Object;
-
-typedef struct Closest_Object
+vector<vector<double>> mult_matrix(vector<vector<double>> M, vector<vector<double>> I)
 {
-    double closest_t;
-    Object object;
+    vector<vector<double>> X;
 
-    Closest_Object(double t, Object obj)
-    {
-        closest_t = t;
-        object = obj;
-    }
-    Closest_Object() {}
+    double a = (M[0][0] * I[0][0]) + (M[0][1] * I[1][0]) + (M[0][2] * I[2][0]) + (M[0][3] * I[3][0]);
+    double b = (M[0][0] * I[0][1]) + (M[0][1] * I[1][1]) + (M[0][2] * I[2][1]) + (M[0][3] * I[3][1]);
+    double c = (M[0][0] * I[0][2]) + (M[0][1] * I[1][2]) + (M[0][2] * I[2][2]) + (M[0][3] * I[3][2]);
+    double d = (M[0][0] * I[0][3]) + (M[0][1] * I[1][3]) + (M[0][2] * I[2][3]) + (M[0][3] * I[3][3]);
+    X.push_back({a, b, c, d});
+    a = (M[1][0] * I[0][0]) + (M[1][1] * I[1][0]) + (M[1][2] * I[2][0]) + (M[1][3] * I[3][0]);
+    b = (M[1][0] * I[0][1]) + (M[1][1] * I[1][1]) + (M[1][2] * I[2][1]) + (M[1][3] * I[3][1]);
+    c = (M[1][0] * I[0][2]) + (M[1][1] * I[1][2]) + (M[1][2] * I[2][2]) + (M[1][3] * I[3][2]);
+    d = (M[1][0] * I[0][3]) + (M[1][1] * I[1][3]) + (M[1][2] * I[2][3]) + (M[1][3] * I[3][3]);
+    X.push_back({a, b, c, d});
+    a = (M[2][0] * I[0][0]) + (M[2][1] * I[1][0]) + (M[2][2] * I[2][0]) + (M[2][3] * I[3][0]);
+    b = (M[2][0] * I[0][1]) + (M[2][1] * I[1][1]) + (M[2][2] * I[2][1]) + (M[2][3] * I[3][1]);
+    c = (M[2][0] * I[0][2]) + (M[2][1] * I[1][2]) + (M[2][2] * I[2][2]) + (M[2][3] * I[3][2]);
+    d = (M[2][0] * I[0][3]) + (M[2][1] * I[1][3]) + (M[2][2] * I[2][3]) + (M[2][3] * I[3][3]);
+    X.push_back({a, b, c, d});
+    a = (M[3][0] * I[0][0]) + (M[3][1] * I[1][0]) + (M[3][2] * I[2][0]) + (M[3][3] * I[3][0]);
+    b = (M[3][0] * I[0][1]) + (M[3][1] * I[1][1]) + (M[3][2] * I[2][1]) + (M[3][3] * I[3][1]);
+    c = (M[3][0] * I[0][2]) + (M[3][1] * I[1][2]) + (M[3][2] * I[2][2]) + (M[3][3] * I[3][2]);
+    d = (M[3][0] * I[0][3]) + (M[3][1] * I[1][3]) + (M[3][2] * I[2][3]) + (M[3][3] * I[3][3]);
+    X.push_back({a, b, c, d});
 
-} Closest_Object;
+    return X;
+}
 
-typedef struct Light
+Vector transform_W_to_C(vector<vector<double>> M, Vector P, bool p)
 {
-    Vector intensity;
-    Vector position;
-    Vector direction;
-    double grau;
-    string type;
+    Vector a;
+    Vector b;
+    Vector c;
+    Vector d;
+    Vector new_P;
+    double x = p == 0 ? 0 : 1; // 0: vetor; 1: ponto
 
-    Light(Vector intensity_l, Vector pisition_l, string type_l) // point or directional
-    {
-        intensity = intensity_l;
-        if (type_l == "point")
-            position = pisition_l;
-        if (type_l == "directional")
-            direction = pisition_l;
-        type = type_l;
-    }
+    a = Vector(P.x * M[0][0], P.x * M[1][0], P.x * M[2][0], P.x * M[3][0]);
+    b = Vector(P.y * M[0][1], P.y * M[1][1], P.y * M[2][1], P.y * M[3][1]);
+    c = Vector(P.z * M[0][2], P.z * M[1][2], P.z * M[2][2], P.z * M[3][2]);
+    d = Vector(P.w * M[0][3], P.w * M[1][3], P.w * M[2][3], P.w * x);
+    new_P = sum_vector(sum_vector(a, b, 1), sum_vector(c, d, 1), 1);
+    // Vector new_P_norm = Vector(new_P.x / length(new_P), new_P.y / length(new_P), new_P.z / length(new_P), new_P.w / length(new_P));
+    return new_P;
+}
 
-    Light(Vector intensity_l, Vector pisition_l, Vector direction_l, double grau_l, string type_l) // spot
-    {
-        intensity = intensity_l;
-        position = pisition_l;
-        direction = direction_l;
-        grau = grau_l;
-        type = type_l;
-    }
-
-    Light() {}
-} Light;
-
-typedef struct Scene
+vector<vector<double>> matrix_C_to_W(Vector O, Vector look_at, Vector view_up)
 {
-    vector<Object> objects;
-    Canvas canva;
-    vector<Light> lights;
+    Vector O_sub_lookAt = sub_vector(O, look_at, 1);
 
-    Scene(vector<Object> objects_scene, Canvas c, vector<Light> lights_scene)
+    Vector kc = Vector(O_sub_lookAt.x / length(O_sub_lookAt), O_sub_lookAt.y / length(O_sub_lookAt), O_sub_lookAt.z / length(O_sub_lookAt), 0);
+
+    Vector view_up_mult_kc = vector_mult(view_up, kc, 0);
+
+    Vector ic = Vector(view_up_mult_kc.x / length(view_up_mult_kc), view_up_mult_kc.y / length(view_up_mult_kc), view_up_mult_kc.z / length(view_up_mult_kc), 0);
+
+    Vector kc_mult_ic = vector_mult(kc, ic, 0);
+
+    Vector jc = Vector(kc_mult_ic.x / length(kc_mult_ic), kc_mult_ic.y / length(kc_mult_ic), kc_mult_ic.z / length(kc_mult_ic), 0);
+
+    vector<vector<double>> M_C_to_W;
+
+    M_C_to_W.push_back({ic.x, ic.y, ic.z, -dot(ic, O)});
+    M_C_to_W.push_back({jc.x, jc.y, jc.z, -dot(jc, O)});
+    M_C_to_W.push_back({kc.x, kc.y, kc.z, -dot(kc, O)});
+    M_C_to_W.push_back({0., 0., 0., 1.});
+
+    return mult_matrix(M_C_to_W, matrix_I());
+}
+
+vector<vector<double>> matrix_translatef(double x, double y, double z, Vector P)
+{
+    vector<vector<double>> M_Traslatef;
+
+    M_Traslatef.push_back({1., 0., 0., x - P.x});
+    M_Traslatef.push_back({0., 1., 0., y - P.y});
+    M_Traslatef.push_back({0., 0., 1., z - P.z});
+    M_Traslatef.push_back({0., 0., 0., 1.});
+
+    return mult_matrix(M_Traslatef, matrix_I());
+}
+
+vector<vector<double>> matrix_rotation(string axis, double angle)
+{
+    vector<vector<double>> M_Rotation;
+    if (axis == "x")
     {
-        objects = objects_scene;
-        canva = c;
-        lights = lights_scene;
+        M_Rotation.push_back({1., 0., 0., 0.});
+        M_Rotation.push_back({0., cos(angle), -sin(angle), 0.});
+        M_Rotation.push_back({0., sin(angle), cos(angle), 0.});
+        M_Rotation.push_back({0., 0., 0., 1.});
+
+        return mult_matrix(M_Rotation, matrix_I());
     }
-    Scene() {}
-
-    double dot(Vector a, Vector b)
+    else if (axis == "y")
     {
-        return (a.x * b.x) + (a.y * b.y) + (a.z * b.z);
-    }
+        M_Rotation.push_back({cos(angle), 0., sin(angle), 0.});
+        M_Rotation.push_back({0., 1, 0., 0.});
+        M_Rotation.push_back({-sin(angle), 0., cos(angle), 0.});
+        M_Rotation.push_back({0., 0., 0., 1.});
 
-    Vector vector_mult(Vector a, Vector b)
-    {
-        double row1 = (a.y * b.z) - (a.z * b.y);
-        double row2 = (a.z * b.x) - (a.x * b.z);
-        double row3 = (a.x * b.y) - (a.y * b.x);
-        return Vector(row1, row2, row3);
-    }
-
-    Vector sum_vector(Vector a, Vector b)
-    {
-        return Vector(a.x + b.x, a.y + b.y, a.z + b.z);
-    }
-
-    Vector sub_vector(Vector a, Vector b)
-    {
-        return Vector(a.x - b.x, a.y - b.y, a.z - b.z);
-    }
-
-    double calc_intensity(double i, double x, double length_a, double length_b, double specular, double k, int flag)
-    {
-        if (flag == 0)
-        {
-            return (i * k) * pow((x / (length_a * length_b)), specular);
-        }
-        return (i * k) * (x / length_a * length_b);
-    }
-
-    double length(Vector v)
-    {
-        return sqrt((v.x * v.x) + (v.y * v.y) + (v.z * v.z));
-    }
-
-    Vector compute_lighting(Vector pi, Vector N, Vector V, Object object)
-    {
-        Vector i(0.0, 0.0, 0.0);
-        Vector L;
-        Vector ds;             // case spot
-        Vector intensity_spot; // case spot
-
-        for (int j = 0; j < lights.size(); j++)
-        {
-            if (lights[j].type == "ambient")
-            {
-                i.x += lights[j].intensity.x * object.k_a.x;
-                i.y += lights[j].intensity.y * object.k_a.y;
-                i.z += lights[j].intensity.z * object.k_a.z;
-            }
-            else
-            {
-                if (lights[j].type == "point")
-                {
-                    L = Vector(lights[j].position.x - pi.x, lights[j].position.y - pi.y, lights[j].position.z - pi.z);
-                }
-                else if (lights[j].type == "directional")
-                {
-                    L = lights[j].direction;
-                }
-                double Pf_Pi = length(L);
-                L = Vector(L.x / Pf_Pi, L.y / Pf_Pi, L.z / Pf_Pi);
-
-                if (lights[j].type == "spot")
-                {
-                    double direction_length = length(lights[j].direction);
-                    ds = Vector(-(lights[j].direction.x / direction_length), -(lights[j].direction.y / direction_length), -(lights[j].direction.z / direction_length));
-                    double l_dot_ds = dot(L, ds);
-                    if (l_dot_ds < cos(lights[j].grau))
-                    {
-                        return Vector((lights[1].intensity.x * object.k_a.x), (lights[1].intensity.y * object.k_a.y), (lights[1].intensity.z * object.k_a.z));
-                    }
-                    intensity_spot = Vector(lights[j].intensity.x * l_dot_ds, lights[j].intensity.y * l_dot_ds, lights[j].intensity.z * l_dot_ds);
-                }
-
-                double n_dot_l = dot(N, L);
-
-                // DIFUSA
-                if (n_dot_l > 0)
-                {
-                    if (lights[j].type == "spot")
-                    {
-                        i.x += calc_intensity(intensity_spot.x, n_dot_l, length(N), length(L), object.specular, object.k_d.x, 1);
-                        i.y += calc_intensity(intensity_spot.y, n_dot_l, length(N), length(L), object.specular, object.k_d.y, 1);
-                        i.z += calc_intensity(intensity_spot.z, n_dot_l, length(N), length(L), object.specular, object.k_d.z, 1);
-                    }
-                    else
-                    {
-                        i.x += calc_intensity(lights[j].intensity.x, n_dot_l, length(N), length(L), object.specular, object.k_d.x, 1);
-                        i.y += calc_intensity(lights[j].intensity.y, n_dot_l, length(N), length(L), object.specular, object.k_d.y, 1);
-                        i.z += calc_intensity(lights[j].intensity.z, n_dot_l, length(N), length(L), object.specular, object.k_d.z, 1);
-                    }
-                }
-
-                // ESPECULAR
-                if (object.specular != -1)
-                {
-                    Vector R = Vector(((2 * dot(L, N)) * N.x) - L.x, ((2 * dot(L, N)) * N.y) - L.y, ((2 * dot(L, N)) * N.z) - L.z);
-                    double r_dot_v = dot(R, V);
-                    if (r_dot_v > 0)
-                    {
-                        if (lights[j].type == "spot")
-                        {
-                            i.x += calc_intensity(intensity_spot.x, r_dot_v, length(R), length(V), object.specular, object.k_e.x, 0);
-                            i.y += calc_intensity(intensity_spot.y, r_dot_v, length(R), length(V), object.specular, object.k_e.y, 0);
-                            i.z += calc_intensity(intensity_spot.z, r_dot_v, length(R), length(V), object.specular, object.k_e.z, 0);
-                        }
-                        else
-                        {
-
-                            i.x += calc_intensity(lights[j].intensity.x, r_dot_v, length(R), length(V), object.specular, object.k_e.x, 0);
-                            i.y += calc_intensity(lights[j].intensity.y, r_dot_v, length(R), length(V), object.specular, object.k_e.y, 0);
-                            i.z += calc_intensity(lights[j].intensity.z, r_dot_v, length(R), length(V), object.specular, object.k_e.z, 0);
-                        }
-                    }
-                }
-            }
-        }
-
-        return i;
+        return mult_matrix(M_Rotation, matrix_I());
     }
 
-    tuple<vector<Vector>, vector<VertexIndex>, vector<EdgeIndex>> cube_maping(Object cube)
-    {
-        Vector centro = Vector(cube.base.x, cube.base.y, cube.base.z);
-        // Vector centro = Vector(cube.base.x, cube.base.y + (cube.edge / 2.), cube.base.z);
-        Vector A = Vector(centro.x - (cube.edge / 2.), centro.y - (cube.edge / 2.), centro.z + (cube.edge / 2.));
-        Vector B = Vector(centro.x - (cube.edge / 2.), centro.y - (cube.edge / 2.), centro.z - (cube.edge / 2.));
-        Vector C = Vector(centro.x + (cube.edge / 2.), centro.y - (cube.edge / 2.), centro.z - (cube.edge / 2.));
-        Vector D = Vector(centro.x + (cube.edge / 2.), centro.y - (cube.edge / 2.), centro.z + (cube.edge / 2.));
-        Vector E = Vector(centro.x - (cube.edge / 2.), centro.y + (cube.edge / 2.), centro.z + (cube.edge / 2.));
-        Vector F = Vector(centro.x - (cube.edge / 2.), centro.y + (cube.edge / 2.), centro.z - (cube.edge / 2.));
-        Vector G = Vector(centro.x + (cube.edge / 2.), centro.y + (cube.edge / 2.), centro.z - (cube.edge / 2.));
-        Vector H = Vector(centro.x + (cube.edge / 2.), centro.y + (cube.edge / 2.), centro.z + (cube.edge / 2.));
-        vector<Vector> LV;
-        LV.push_back(A);
-        LV.push_back(B);
-        LV.push_back(C);
-        LV.push_back(D);
-        LV.push_back(E);
-        LV.push_back(F);
-        LV.push_back(G);
-        LV.push_back(H);
-        vector<VertexIndex> LA;
-        LA.push_back(VertexIndex(0, 1));
-        LA.push_back(VertexIndex(1, 2));
-        LA.push_back(VertexIndex(2, 3));
-        LA.push_back(VertexIndex(3, 0));
-        LA.push_back(VertexIndex(4, 5));
-        LA.push_back(VertexIndex(5, 6));
-        LA.push_back(VertexIndex(6, 7));
-        LA.push_back(VertexIndex(7, 4));
-        LA.push_back(VertexIndex(0, 4));
-        LA.push_back(VertexIndex(1, 5));
-        LA.push_back(VertexIndex(2, 6));
-        LA.push_back(VertexIndex(3, 7));
-        LA.push_back(VertexIndex(2, 7));
-        LA.push_back(VertexIndex(5, 7));
-        LA.push_back(VertexIndex(5, 2));
-        LA.push_back(VertexIndex(1, 4));
-        LA.push_back(VertexIndex(1, 3));
-        LA.push_back(VertexIndex(3, 4));
-        vector<EdgeIndex> LF;
-        LF.push_back(EdgeIndex(6, 10, 12));
-        LF.push_back(EdgeIndex(12, 2, 11));
-        LF.push_back(EdgeIndex(7, 4, 13));
-        LF.push_back(EdgeIndex(13, 5, 6));
-        LF.push_back(EdgeIndex(5, 14, 10));
-        LF.push_back(EdgeIndex(9, 1, 14));
-        LF.push_back(EdgeIndex(4, 15, 9));
-        LF.push_back(EdgeIndex(8, 0, 15));
-        LF.push_back(EdgeIndex(1, 16, 2));
-        LF.push_back(EdgeIndex(3, 16, 10));
-        LF.push_back(EdgeIndex(11, 17, 7));
-        LF.push_back(EdgeIndex(3, 8, 17));
-        auto t = make_tuple(LV, LA, LF);
-        return t;
-    }
+    M_Rotation.push_back({cos(angle), -sin(angle), 0., 0.});
+    M_Rotation.push_back({sin(angle), cos(angle), 0., 0.});
+    M_Rotation.push_back({0., 0., 1., 0.});
+    M_Rotation.push_back({0., 0., 0., 1.});
 
-    Object mesh(Object cube)
-    {
-        auto t = cube_maping(cube);
-        Object mesh_cube("cube", cube.edge, cube.specular, cube.base, cube.k_d, cube.k_e, cube.k_a, get<0>(t), get<1>(t), get<2>(t));
-        return mesh_cube;
-    }
+    return mult_matrix(M_Rotation, matrix_I());
+}
 
-    pair<double, double> intersect_ray_sphere(Vector p0, Vector D, Object sphere)
-    {
-        double r = sphere.radius;
+vector<vector<double>> matrix_scale(double x, double y, double z)
+{
+    vector<vector<double>> M_Scale;
 
-        Vector w = Vector(p0.x - sphere.center.x, p0.y - sphere.center.y, p0.z - sphere.center.z);
+    M_Scale.push_back({x, 0., 0., 0.});
+    M_Scale.push_back({0., y, 0., 0.});
+    M_Scale.push_back({0., 0., z, 0.});
+    M_Scale.push_back({0., 0., 0., 1.});
 
-        double a = (D.x * D.x) + (D.y * D.y) + (D.z * D.z);
-        double b = 2 * ((w.x * D.x) + (w.y * D.y) + (w.z * D.z));
-        double c = ((w.x * w.x) + (w.y * w.y) + (w.z * w.z)) - (r * r);
+    return mult_matrix(M_Scale, matrix_I());
+}
 
-        double delta = b * b - 4 * a * c;
-        if (delta < 0)
-        {
-            return {INFINITY, INFINITY};
-        }
+// vector<vector<double>> matrices_transform(vector<vector<vector<double>>> matrix_list)
+// {
+//     vector<vector<double>> M;
 
-        return {(-b + sqrt(delta)) / (2. * a), (-b - sqrt(delta)) / (2. * a)};
-    }
+//     M.push_back({1., 0., 0., 0.});
+//     M.push_back({0., 1., 0., 0.});
+//     M.push_back({0., 0., 1., 0.});
+//     M.push_back({0., 0., 0., 1.});
 
-    double intersect_ray_plane(Vector p0, Vector D, Object plane)
-    {
-        Vector w = Vector(p0.x - plane.p_pi.x, p0.y - plane.p_pi.y, p0.z - plane.p_pi.z);
-        Vector normal = plane.normal;
+//     for (int i = 0; i < matrix_list.size(); i++)
+//     {
+//         M = mult_matrix(matrix_list[i], M);
+//     }
 
-        double num = ((w.x * normal.x) + (w.y * normal.y) + (w.z * normal.z));
-        double den = ((D.x * normal.x) + (D.y * normal.y) + (D.z * normal.z));
-
-        double ti = -num / den;
-
-        if (ti < 0)
-        {
-            return INFINITY;
-        }
-
-        return ti;
-    }
-
-    bool is_in_shell(Vector Pi, Object object)
-    {
-        Vector Pi_sub_base = Vector(Pi.x - object.base.x, Pi.y - object.base.y, Pi.z - object.base.z);
-        return (dot(Pi_sub_base, object.u) < 0 || dot(Pi_sub_base, object.u) > object.h);
-    }
-
-    bool is_in_base(Vector P, Object plane, Object object)
-    {
-        Vector CP = Vector(P.x - plane.p_pi.x, P.y - plane.p_pi.y, P.z - plane.p_pi.z);
-        double CP_length = length(CP);
-        double cp_x_n = dot(CP, object.u);
-        bool is_zero = (cp_x_n > 0.0) && (cp_x_n < 0.0);
-        bool is_radius = CP_length <= object.radius;
-        return (is_zero && is_radius);
-    }
-
-    double intersect_ray_base(Vector p0, Vector D, Object plane, Object object) // cylinder or cone
-    {
-        double t;
-        t = intersect_ray_plane(p0, D, plane);
-        Vector P = Vector(p0.x + (t * D.x), p0.y + (t * D.y), p0.z + (t * D.z));
-        return is_in_base(P, plane, object) ? t : INFINITY;
-    }
-
-    pair<double, double> intersect_ray_cylinder(Vector p0, Vector D, Object cylinder)
-    {
-        double r = cylinder.radius;
-        double t1, t2;
-
-        Vector p0_sub_base = Vector(p0.x - cylinder.base.x, p0.y - cylinder.base.y, p0.z - cylinder.base.z);
-
-        Vector v = Vector(p0_sub_base.x - (dot(p0_sub_base, cylinder.u)) * cylinder.u.x, p0_sub_base.y - (dot(p0_sub_base, cylinder.u)) * cylinder.u.y, p0_sub_base.z - (dot(p0_sub_base, cylinder.u)) * cylinder.u.z);
-        Vector w = Vector(D.x - ((dot(D, cylinder.u)) * cylinder.u.x), D.y - ((dot(D, cylinder.u)) * cylinder.u.y), D.z - ((dot(D, cylinder.u)) * cylinder.u.z));
-
-        double a = dot(w, w);
-        double b = 2 * dot(v, w);
-        double c = dot(v, v) - (r * r);
-
-        double delta = b * b - 4 * a * c;
-        if (a == 0 || delta < 0)
-        {
-            return {INFINITY, INFINITY};
-        }
-
-        t1 = (-b + sqrt(delta)) / (2. * a);
-        t2 = (-b - sqrt(delta)) / (2. * a);
-
-        Vector Pi1 = Vector(p0.x + (D.x * t1), p0.y + (D.y * t1), p0.z + (D.z * t1));
-        t1 = is_in_shell(Pi1, cylinder) ? INFINITY : t1;
-        Vector Pi2 = Vector(p0.x + (D.x * t2), p0.y + (D.y * t2), p0.z + (D.z * t2));
-        t2 = is_in_shell(Pi2, cylinder) ? INFINITY : t2;
-
-        return {t1, t2};
-    }
-
-    pair<double, double> intersect_ray_cone(Vector p0, Vector D, Object cone)
-    {
-        double r = cone.radius;
-        double h = cone.h;
-        double cos_sqr_teta = (h * h) / ((r * r) + (h * h));
-        double t1, t2;
-
-        Vector v = Vector(cone.vc.x - p0.x, cone.vc.y - p0.y, cone.vc.z - p0.z);
-
-        double a = (dot(D, cone.u) * dot(D, cone.u)) - dot(D, D) * cos_sqr_teta;
-        double b = (dot(v, D) * cos_sqr_teta - dot(v, cone.u) * dot(D, cone.u)) * 2;
-        double c = (dot(v, cone.u) * dot(v, cone.u)) - dot(v, v) * cos_sqr_teta;
-
-        double delta = b * b - 4 * a * c;
-
-        if (delta < 0)
-        {
-            return {INFINITY, INFINITY};
-        }
-
-        t1 = (-b + sqrt(delta)) / (2 * a);
-        t2 = (-b - sqrt(delta)) / (2 * a);
-
-        Vector Pi1 = Vector(p0.x + (D.x * t1), p0.y + (D.y * t1), p0.z + (D.z * t1));
-        t1 = is_in_shell(Pi1, cone) ? INFINITY : t1;
-        Vector Pi2 = Vector(p0.x + (D.x * t2), p0.y + (D.y * t2), p0.z + (D.z * t2));
-        t2 = is_in_shell(Pi2, cone) ? INFINITY : t2;
-
-        return {t1, t2};
-    }
-
-    pair<double, Vector> intersect_ray_cube(Vector p0, Vector D, Object cube)
-    {
-        Object mesh_cube = mesh(cube);
-        int v1, v2, v3;
-        Vector P1, P2, P3;
-        Vector r1, r2;
-        Vector n_face, N_face;
-        Vector Pi;
-        double C1, C2, C3;
-        double t = INFINITY;
-        double closest_t = INFINITY;
-        Vector normal_closest_face;
-        double EPS = 0.0000001;
-        for (int i = 0; i < mesh_cube.LF.size(); i++)
-        {
-            int idA1 = mesh_cube.LF[i].a1;
-            int idA2 = mesh_cube.LF[i].a2;
-            int idA3 = mesh_cube.LF[i].a3;
-
-            int idV11 = mesh_cube.LA[idA1].v1 + 1;
-            int idV12 = mesh_cube.LA[idA1].v2 + 1;
-            int idV21 = mesh_cube.LA[idA2].v1 + 1;
-            int idV22 = mesh_cube.LA[idA2].v2 + 1;
-
-            int n1 = idV11 * idV12;
-            int n = n1 / idV21;
-            if (n == idV11 || n == idV12)
-            {
-                v1 = idV21;
-                v2 = idV22;
-                v3 = n;
-            }
-            else
-            {
-                v1 = idV22;
-                v2 = idV21;
-                v3 = n1 / v1;
-            }
-
-            v1 = v1 - 1;
-            v2 = v2 - 1;
-            v3 = v3 - 1;
-
-            P1.x = mesh_cube.LV[v1].x;
-            P1.y = mesh_cube.LV[v1].y;
-            P1.z = mesh_cube.LV[v1].z;
-
-            P2.x = mesh_cube.LV[v2].x;
-            P2.y = mesh_cube.LV[v2].y;
-            P2.z = mesh_cube.LV[v2].z;
-
-            P3.x = mesh_cube.LV[v3].x;
-            P3.y = mesh_cube.LV[v3].y;
-            P3.z = mesh_cube.LV[v3].z;
-
-            r1 = sub_vector(P2, P1);
-            r2 = sub_vector(P3, P1);
-
-            N_face = vector_mult(r1, r2);
-            double N_length = length(N_face);
-            n_face = Vector(-N_face.x / N_length, -N_face.y / N_length, -N_face.z / N_length);
-
-            t = -(dot(sub_vector(p0, P1), n_face)) / dot(D, n_face);
-            Pi = Vector(p0.x + (t * D.x), p0.y + (t * D.y), p0.z + (t * D.z));
-            C1 = (dot(vector_mult(sub_vector(P3, Pi), sub_vector(P1, Pi)), n_face)) / dot(N_face, n_face);
-            C2 = (dot(vector_mult(sub_vector(P1, Pi), sub_vector(P2, Pi)), n_face)) / dot(N_face, n_face);
-            C3 = (dot(vector_mult(sub_vector(P2, Pi), sub_vector(P3, Pi)), n_face)) / dot(N_face, n_face);
-
-            if (C1 >= 0. - EPS && C2 >= 0. - EPS && C3 >= 0. - EPS)
-            {
-                if (closest_t > t)
-                {
-                    closest_t = t;
-                    normal_closest_face = n_face;
-                }
-            }
-        }
-
-        return {closest_t, normal_closest_face};
-    }
-
-    bool has_shadow(Vector pi, Vector L, double length_Pf_Pi)
-    {
-        bool shadow = false;
-        double s1, s2;
-        Vector normal_face;
-
-        for (int i = 0; i < objects.size(); i++)
-        {
-            if (objects[i].type == "sphere")
-            {
-                tie(s1, s2) = intersect_ray_sphere(pi, L, objects[i]);
-                if (s1 > 0 && s1 < length_Pf_Pi)
-                {
-                    shadow = true;
-                }
-                if (s2 > 0 && s2 < length_Pf_Pi)
-                {
-                    shadow = true;
-                }
-            }
-            if (objects[i].type == "plane")
-            {
-                s1 = intersect_ray_plane(pi, L, objects[i]);
-                if (s1 > 0 && s1 < length_Pf_Pi)
-                {
-                    shadow = true;
-                }
-            }
-            if (objects[i].type == "cylinder")
-            {
-                tie(s1, s2) = intersect_ray_cylinder(pi, L, objects[i]);
-                if (s1 > 0 && s1 < length_Pf_Pi)
-                {
-                    shadow = true;
-                }
-                if (s2 > 0 && s2 < length_Pf_Pi)
-                {
-                    shadow = true;
-                }
-            }
-            if (objects[i].type == "cone")
-            {
-                tie(s1, s2) = intersect_ray_cone(pi, L, objects[i]);
-                if (s1 > 0 && s1 < length_Pf_Pi)
-                {
-                    shadow = true;
-                }
-                if (s2 > 0 && s2 < length_Pf_Pi)
-                {
-                    shadow = true;
-                }
-            }
-            if (objects[i].type == "cube")
-            {
-                tie(s1, normal_face) = intersect_ray_cube(pi, L, objects[i]);
-                if (s1 > 0 && s1 < length_Pf_Pi)
-                {
-                    shadow = true;
-                }
-            }
-        }
-
-        return shadow;
-    }
-
-    Color define_color(double closest_t, Object object, Vector p0, Vector D, Color pixel_image)
-    {
-        Vector pi = Vector(p0.x + (D.x * closest_t), p0.y + (D.y * closest_t), p0.z + (D.z * closest_t));
-        Vector N;
-        if (object.type == "sphere")
-        {
-            N = Vector(pi.x - object.center.x, pi.y - object.center.y, pi.z - object.center.z);
-            N = Vector(N.x / object.radius, N.y / object.radius, N.z / object.radius);
-        }
-        if (object.type == "plane")
-        {
-            N = object.normal;
-        }
-        if (object.type == "cylinder")
-        {
-            Vector CP = Vector(pi.x - object.base.x, pi.y - object.base.y, pi.z - object.base.z);
-            double CP_dot_u = dot(CP, object.u);
-            Vector AP = Vector(CP.x - (object.u.x * (CP_dot_u)), CP.y - (object.u.y * (CP_dot_u)), CP.z - (object.u.z * (CP_dot_u)));
-            double AP_length = length(AP);
-            N = Vector(AP.x / AP_length, AP.y / AP_length, AP.z / AP_length);
-        }
-        if (object.type == "cone")
-        {
-            Vector w = Vector(object.vc.x - pi.x, object.vc.y - pi.y, object.vc.z - pi.z);
-            Vector n_barra = vector_mult(w, object.u);
-            N = vector_mult(n_barra, w);
-            double N_length = length(N);
-            N = Vector(N.x / N_length, N.y / N_length, N.z / N_length);
-        }
-        if (object.type == "cube")
-        {
-            N = object.normal;
-        }
-
-        Vector L = Vector(lights[0].position.x - pi.x, lights[0].position.y - pi.y, lights[0].position.z - pi.z);
-        double length_Pf_Pi = length(L);
-        L = Vector(L.x / length_Pf_Pi, L.y / length_Pf_Pi, L.z / length_Pf_Pi);
-
-        if (has_shadow(pi, L, length_Pf_Pi))
-        {
-            if (object.type == "plane")
-            {
-                if (object.position == "floor")
-                {
-                    return Color(pixel_image.r * (lights[1].intensity.x * object.k_a.x), pixel_image.g * (lights[1].intensity.y * object.k_a.y), pixel_image.b * (lights[1].intensity.z * object.k_a.z));
-                }
-            }
-            return Color(255 * (lights[1].intensity.x * object.k_a.x), 255 * (lights[1].intensity.y * object.k_a.y), 255 * (lights[1].intensity.z * object.k_a.z));
-        }
-
-        Vector i = compute_lighting(pi, N, Vector(-D.x, -D.y, -D.z), object);
-
-        if (object.type == "plane")
-        {
-            if (object.position == "floor")
-            {
-                return Color(pixel_image.r * i.x, pixel_image.g * i.y, pixel_image.b * i.z);
-            }
-        }
-
-        return Color(255 * i.x, 255 * i.y, 255 * i.z);
-    }
-
-    Color trace_ray(Vector p0, Vector D, double t_min, double t_max, Color pixel_image)
-    {
-        double length_D = length(D);
-        D = Vector(D.x / length_D, D.y / length_D, D.z / length_D);
-        double closest_t_sphere = INFINITY;
-        double closest_t_plane = INFINITY;
-        double closest_t_cylinder = INFINITY;
-        double closest_t_cone = INFINITY;
-        double closest_t_cube = INFINITY;
-        Object closest_sphere;
-        Object closest_plane;
-        Object closest_cylinder;
-        Object closest_cone;
-        Object closest_cube;
-        double EPS = 0.01;
-        double t1, t2;
-        Vector normal_face;
-        for (int i = 0; i < objects.size(); i++)
-        {
-            if (objects[i].type == "sphere")
-            {
-                tie(t1, t2) = intersect_ray_sphere(p0, D, objects[i]);
-                if ((t1 > t_min && t1 < t_max) && t1 < closest_t_sphere)
-                {
-                    closest_t_sphere = t1;
-                    closest_sphere = objects[i];
-                }
-                if ((t2 > t_min && t2 < t_max) && t2 < closest_t_sphere)
-                {
-                    closest_t_sphere = t2;
-                    closest_sphere = objects[i];
-                }
-            }
-            if (objects[i].type == "plane")
-            {
-                t1 = intersect_ray_plane(p0, D, objects[i]);
-                if ((t1 > t_min && t1 < t_max) && t1 < closest_t_plane)
-                {
-                    closest_t_plane = t1;
-                    closest_plane = objects[i];
-                }
-            }
-            if (objects[i].type == "cylinder")
-            {
-                tie(t1, t2) = intersect_ray_cylinder(p0, D, objects[i]);
-                if ((t1 > t_min && t1 < t_max) && t1 < closest_t_cylinder)
-                {
-                    closest_t_cylinder = t1;
-                    closest_cylinder = objects[i];
-                }
-                if ((t2 > t_min && t2 < t_max) && t2 < closest_t_cylinder)
-                {
-                    closest_t_cylinder = t2;
-                    closest_cylinder = objects[i];
-                }
-                Vector N_base = Vector(-closest_cylinder.u.x, -closest_cylinder.u.y, -closest_cylinder.u.z);
-                Vector P_pi_base = closest_cylinder.base;
-                Object plane_base("plane", P_pi_base, N_base, objects[i].specular, objects[i].k_d, objects[i].k_e, objects[i].k_a, "base");
-                Vector N_cover = closest_cylinder.u;
-                Vector P_pi_cover = Vector(closest_cylinder.base.x + (closest_cylinder.u.x * closest_cylinder.h), closest_cylinder.base.y + (closest_cylinder.u.y * closest_cylinder.h), closest_cylinder.base.z + (closest_cylinder.u.z * closest_cylinder.h));
-                Object plane_top("plane", P_pi_cover, N_cover, objects[i].specular, objects[i].k_d, objects[i].k_e, objects[i].k_a, "cover");
-                t1 = intersect_ray_base(p0, D, plane_base, closest_cylinder);
-                t2 = intersect_ray_base(p0, D, plane_top, closest_cylinder);
-
-                if ((t1 > t_min && t1 < t_max) && t1 < closest_t_cylinder)
-                {
-                    closest_t_cylinder = t1;
-                    closest_cylinder = plane_base;
-                }
-                if ((t2 > t_min && t2 < t_max) && t2 < closest_t_cylinder)
-                {
-                    closest_t_cylinder = t2;
-                    closest_cylinder = plane_top;
-                }
-            }
-            if (objects[i].type == "cone")
-            {
-                tie(t1, t2) = intersect_ray_cone(p0, D, objects[i]);
-                if ((t1 > t_min && t1 < t_max) && t1 < closest_t_cone)
-                {
-                    closest_t_cone = t1;
-                    closest_cone = objects[i];
-                }
-                if ((t2 > t_min && t2 < t_max) && t2 < closest_t_cone)
-                {
-                    closest_t_cone = t2;
-                    closest_cone = objects[i];
-                }
-                Vector N_base = Vector(closest_cone.u.x, closest_cone.u.y, closest_cone.u.z);
-                Vector P_pi_base = closest_cone.base;
-                Object plane_base("plane", P_pi_base, N_base, objects[i].specular, objects[i].k_d, objects[i].k_e, objects[i].k_a, "base");
-                t1 = intersect_ray_base(p0, D, plane_base, closest_cone);
-                if ((t1 > t_min && t1 < t_max) && t1 < closest_t_cone)
-                {
-                    closest_t_cone = t1;
-                    closest_cone = plane_base;
-                }
-            }
-            if (objects[i].type == "cube")
-            {
-                tie(t1, normal_face) = intersect_ray_cube(p0, D, objects[i]);
-                if ((t1 > t_min && t1 < t_max) && t1 < closest_t_cone)
-                {
-                    closest_t_cube = t1;
-                    Object cube_face("cube", objects[i].specular, normal_face, objects[i].k_d, objects[i].k_e, objects[i].k_a);
-                    closest_cube = cube_face;
-                }
-            }
-        }
-
-        if (closest_t_sphere == INFINITY && closest_t_plane == INFINITY && closest_t_cylinder == INFINITY && closest_t_cone == INFINITY && closest_t_cube == INFINITY)
-        {
-            return canva.bg;
-        }
-
-        vector<Closest_Object> closest_objects;
-        closest_objects.push_back(Closest_Object(closest_t_sphere, closest_sphere));
-        closest_objects.push_back(Closest_Object(closest_t_plane, closest_plane));
-        closest_objects.push_back(Closest_Object(closest_t_cylinder, closest_cylinder));
-        closest_objects.push_back(Closest_Object(closest_t_cone, closest_cone));
-        closest_objects.push_back(Closest_Object(closest_t_cube, closest_cube));
-
-        double smaller = INFINITY;
-        double closest_t;
-        Object closest_object;
-        for (int i = 0; i < closest_objects.size(); i++) // pega o objeto com menor t (objeto mais próximo)
-        {
-            if (closest_objects[i].closest_t < smaller)
-            {
-                smaller = closest_objects[i].closest_t;
-                closest_t = closest_objects[i].closest_t;
-                closest_object = closest_objects[i].object;
-            }
-        }
-
-        return define_color(closest_t - EPS, closest_object, p0, D, pixel_image);
-    }
-} Scene;
+//     return M;
+// }
 
 int main()
 {
@@ -914,15 +216,30 @@ int main()
     Canvas canva(500., 500., vp, Color(100, 100, 100));
 
     vector<Object> objects;
+
     vector<Light> lights;
 
-    double raio = 40.;
+    vector<vector<double>> M_C_to_W;
+    vector<vector<double>> M_translatef;
+    vector<vector<double>> M_rotation;
+    vector<vector<double>> M_scale;
 
-    Object plane1("plane", Vector(0, -150, 0), Vector(0., 1., 0.), 1., Vector(0.933, 0.933, 0.933), Vector(0.933, 0.933, 0.933), Vector(0.933, 0.933, 0.933), "floor");
-    Object plane2("plane", Vector(200, -150, 0), Vector(-1., 0., 0.), 1., Vector(0.686, 0.933, 0.933), Vector(0.686, 0.933, 0.933), Vector(0.686, 0.933, 0.933), "right");
-    Object plane3("plane", Vector(200, -150, -400), Vector(0., 0., 1.), 1., Vector(0.686, 0.933, 0.933), Vector(0.686, 0.933, 0.933), Vector(0.686, 0.933, 0.933), "front");
-    Object plane4("plane", Vector(-200, -150, 0), Vector(1., 0., 0.), 1., Vector(0.686, 0.933, 0.933), Vector(0.686, 0.933, 0.933), Vector(0.686, 0.933, 0.933), "left");
-    Object plane5("plane", Vector(0, 150, 0), Vector(0., -1., 0.), 1., Vector(0.933, 0.933, 0.933), Vector(0.933, 0.933, 0.933), Vector(0.933, 0.933, 0.933), "ceil");
+    Vector O = Vector(0., 0., 0., 1);
+
+    M_C_to_W = matrix_C_to_W(O, Vector(0, -60, -200, 0), Vector(0., 100., 0., 1));
+    M_translatef = matrix_translatef(60., -150., -165., Vector(0, -150., -165., 1.));
+    M_rotation = matrix_rotation("z", 3.141592 / 4.);
+    // matrix_list.push_back(matrix_scale(2., 2., 1.));
+
+    // vector<vector<double>> M_I;
+
+    // M_I = mult_matrix(matrix_C_to_W(O, Vector(0, -60, -200, 0), Vector(0., 100., 0., 1)), I);
+
+    Object plane1("plane", transform_W_to_C(M_C_to_W, Vector(0, -150, 0, 1), 1), norm_vector(transform_W_to_C(M_C_to_W, Vector(0., 1., 0., 0), 0)), 1., Vector(0.933, 0.933, 0.933, 0), Vector(0.933, 0.933, 0.933, 0), Vector(0.933, 0.933, 0.933, 0), "floor");
+    Object plane2("plane", transform_W_to_C(M_C_to_W, Vector(200, -150, 0, 1), 1), norm_vector(transform_W_to_C(M_C_to_W, Vector(-1., 0., 0., 0), 0)), 1., Vector(0.686, 0.933, 0.933, 0), Vector(0.686, 0.933, 0.933, 0), Vector(0.686, 0.933, 0.933, 0), "right");
+    Object plane3("plane", transform_W_to_C(M_C_to_W, Vector(200, -150, -400, 1), 1), norm_vector(transform_W_to_C(M_C_to_W, Vector(0., 0., 1., 0), 0)), 1., Vector(0.686, 0.933, 0.933, 0), Vector(0.686, 0.933, 0.933, 0), Vector(0.686, 0.933, 0.933, 0), "front");
+    Object plane4("plane", transform_W_to_C(M_C_to_W, Vector(-200, -150, 0, 1), 1), norm_vector(transform_W_to_C(M_C_to_W, Vector(1., 0., 0., 0), 0)), 1., Vector(0.686, 0.933, 0.933, 0), Vector(0.686, 0.933, 0.933, 0), Vector(0.686, 0.933, 0.933, 0), "left");
+    Object plane5("plane", transform_W_to_C(M_C_to_W, Vector(0, 150, 0, 1), 1), norm_vector(transform_W_to_C(M_C_to_W, Vector(0., -1., 0., 0), 0)), 1., Vector(0.933, 0.933, 0.933, 0), Vector(0.933, 0.933, 0.933, 0), Vector(0.933, 0.933, 0.933, 0), "ceil");
 
     objects.push_back(plane1);
     objects.push_back(plane2);
@@ -930,27 +247,34 @@ int main()
     objects.push_back(plane4);
     objects.push_back(plane5);
 
-    Object cylinder1("cylinder", 5., Vector(0, -150, -200.), 90., Vector(0, 1., 0), 10., Vector(0.824, 0.706, 0.549), Vector(0.824, 0.706, 0.549), Vector(0.824, 0.706, 0.549));
+    Object cylinder1("cylinder", 5., transform_W_to_C(M_C_to_W, Vector(0, -150, -200., 1.), 1), 90., norm_vector(transform_W_to_C(M_C_to_W, Vector(0, 1., 0, 0), 0)), 10., Vector(0.824, 0.706, 0.549, 0), Vector(0.824, 0.706, 0.549, 0), Vector(0.824, 0.706, 0.549, 0));
     objects.push_back(cylinder1);
 
-    Object cone1("cone", 90, Vector(0, -60, -200), 150, Vector(0, 1., 0), 10., Vector(0., 1., 0.498), Vector(0., 1., 0.498), Vector(0., 1., 0.498));
+    Object cone1("cone", 90, Vector(0, -60, -200, 1.), 150, Vector(0, 1., 0, 0), 10., Vector(0., 1., 0.498, 0), Vector(0., 1., 0.498, 0), Vector(0., 1., 0.498, 0));
+    cone1.base = transform_W_to_C(M_C_to_W, cone1.base, 1);
+    cone1.u = norm_vector(transform_W_to_C(M_C_to_W, cone1.u, 0));
+    cone1.vc = transform_W_to_C(M_C_to_W, cone1.vc, 1);
     objects.push_back(cone1);
 
-    Object sphere1("sphere", 5., Vector(0, 95, -200.), 10., Vector(0.854, 0.647, 0.125), Vector(0.854, 0.647, 0.125), Vector(0.854, 0.647, 0.125));
+    Object sphere1("sphere", 5., transform_W_to_C(M_C_to_W, Vector(0, 95, -200., 1.), 1), 10., Vector(0.854, 0.647, 0.125, 0), Vector(0.854, 0.647, 0.125, 0), Vector(0.854, 0.647, 0.125, 0));
     objects.push_back(sphere1);
 
-    Object cube("cube", 40., 10., Vector(0, -150., -165.), Vector(1., 0.078, 0.576), Vector(1., 0.078, 0.576), Vector(1., 0.078, 0.576));
+    Object cube("cube", 40., 10., transform_W_to_C(M_C_to_W, transform_W_to_C(M_rotation, Vector(0, -150., -165., 1.), 1), 1), Vector(1., 0.078, 0.576, 0), Vector(1., 0.078, 0.576, 0), Vector(1., 0.078, 0.576, 0));
     objects.push_back(cube);
 
-    Light point_light(Vector(0.7, 0.7, 0.7), Vector(-100, 140., -20.), "point");
-    Light ambient_light(Vector(0.3, 0.3, 0.3), Vector(0, 0, 0), "ambient");
-    // Light directional_light(Vector(0.5, 0.5, 0.5), Vector(-200, 280., -40.), "directional");
-    Light spot_light(Vector(0.7, 0.7, 0.7), Vector(-100, 140., -20.), Vector(0, -1., 0), 0.8, "spot");
+    Light point_light(Vector(0.7, 0.7, 0.7, 0), transform_W_to_C(M_C_to_W, Vector(-100, 140., -20., 1.), 1), "point");
+    Light ambient_light(Vector(0.3, 0.3, 0.3, 0), Vector(0, 0, 0, 0), "ambient");
+    Light directional_light(Vector(0.5, 0.5, 0.5, 0), norm_vector(transform_W_to_C(M_C_to_W, Vector(0, -150., -165., 0), 0)), "directional");
+    Light spot_light(Vector(0.7, 0.7, 0.7, 0), transform_W_to_C(M_C_to_W, Vector(0, 140, 0, 1.), 1), norm_vector(transform_W_to_C(M_C_to_W, Vector(0, -150., -165., 0), 0)), 0.5, "spot");
+
+    // Vector test = transform_W_to_C(M_rotation, Vector(20., 20., 20., 1.), 1);
+
+    // cout << test.x << " " << test.y << " " << test.z << " " << test.w << "\n";
 
     lights.push_back(point_light);
     lights.push_back(ambient_light);
     // lights.push_back(directional_light);
-    lights.push_back(spot_light);
+    // lights.push_back(spot_light);
 
     Scene scene(objects, canva, lights);
 
@@ -992,7 +316,7 @@ int main()
 
             Color pixel_image = matrix_image[y % h][x % w];
 
-            Color color = scene.trace_ray(Vector(0., 0., 20.), D, 0.0, INFINITY, pixel_image);
+            Color color = scene.trace_ray(O, D, 0.0, INFINITY, pixel_image);
 
             rgb_image[c++] = min((int)color.r, 255);
             rgb_image[c++] = min((int)color.g, 255);
