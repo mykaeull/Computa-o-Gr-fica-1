@@ -149,69 +149,12 @@ typedef struct Scene
         return i;
     }
 
-    tuple<vector<Vector>, vector<VertexIndex>, vector<EdgeIndex>> cube_maping(Object cube)
-    {
-        Vector centro = Vector(cube.base.x, cube.base.y, cube.base.z, 0);
-        // Vector centro = Vector(cube.base.x, cube.base.y + (cube.edge / 2.), cube.base.z);
-        Vector A = Vector(centro.x - (cube.edge / 2.), centro.y - (cube.edge / 2.), centro.z + (cube.edge / 2.), 0);
-        Vector B = Vector(centro.x - (cube.edge / 2.), centro.y - (cube.edge / 2.), centro.z - (cube.edge / 2.), 0);
-        Vector C = Vector(centro.x + (cube.edge / 2.), centro.y - (cube.edge / 2.), centro.z - (cube.edge / 2.), 0);
-        Vector D = Vector(centro.x + (cube.edge / 2.), centro.y - (cube.edge / 2.), centro.z + (cube.edge / 2.), 0);
-        Vector E = Vector(centro.x - (cube.edge / 2.), centro.y + (cube.edge / 2.), centro.z + (cube.edge / 2.), 0);
-        Vector F = Vector(centro.x - (cube.edge / 2.), centro.y + (cube.edge / 2.), centro.z - (cube.edge / 2.), 0);
-        Vector G = Vector(centro.x + (cube.edge / 2.), centro.y + (cube.edge / 2.), centro.z - (cube.edge / 2.), 0);
-        Vector H = Vector(centro.x + (cube.edge / 2.), centro.y + (cube.edge / 2.), centro.z + (cube.edge / 2.), 0);
-        vector<Vector> LV;
-        LV.push_back(A);
-        LV.push_back(B);
-        LV.push_back(C);
-        LV.push_back(D);
-        LV.push_back(E);
-        LV.push_back(F);
-        LV.push_back(G);
-        LV.push_back(H);
-        vector<VertexIndex> LA;
-        LA.push_back(VertexIndex(0, 1));
-        LA.push_back(VertexIndex(1, 2));
-        LA.push_back(VertexIndex(2, 3));
-        LA.push_back(VertexIndex(3, 0));
-        LA.push_back(VertexIndex(4, 5));
-        LA.push_back(VertexIndex(5, 6));
-        LA.push_back(VertexIndex(6, 7));
-        LA.push_back(VertexIndex(7, 4));
-        LA.push_back(VertexIndex(0, 4));
-        LA.push_back(VertexIndex(1, 5));
-        LA.push_back(VertexIndex(2, 6));
-        LA.push_back(VertexIndex(3, 7));
-        LA.push_back(VertexIndex(2, 7));
-        LA.push_back(VertexIndex(5, 7));
-        LA.push_back(VertexIndex(5, 2));
-        LA.push_back(VertexIndex(1, 4));
-        LA.push_back(VertexIndex(1, 3));
-        LA.push_back(VertexIndex(3, 4));
-        vector<EdgeIndex> LF;
-        LF.push_back(EdgeIndex(6, 10, 12));
-        LF.push_back(EdgeIndex(12, 2, 11));
-        LF.push_back(EdgeIndex(7, 4, 13));
-        LF.push_back(EdgeIndex(13, 5, 6));
-        LF.push_back(EdgeIndex(5, 14, 10));
-        LF.push_back(EdgeIndex(9, 1, 14));
-        LF.push_back(EdgeIndex(4, 15, 9));
-        LF.push_back(EdgeIndex(8, 0, 15));
-        LF.push_back(EdgeIndex(1, 16, 2));
-        LF.push_back(EdgeIndex(3, 16, 10));
-        LF.push_back(EdgeIndex(11, 17, 7));
-        LF.push_back(EdgeIndex(3, 8, 17));
-        auto t = make_tuple(LV, LA, LF);
-        return t;
-    }
-
-    Object mesh(Object cube)
-    {
-        auto t = cube_maping(cube);
-        Object mesh_cube("cube", cube.edge, cube.specular, cube.base, cube.k_d, cube.k_e, cube.k_a, get<0>(t), get<1>(t), get<2>(t));
-        return mesh_cube;
-    }
+    // Object mesh(Object cube)
+    // {
+    //     auto t = cube_maping(cube);
+    //     Object mesh_cube("cube", cube.edge, cube.specular, cube.base, cube.k_d, cube.k_e, cube.k_a, get<0>(t), get<1>(t), get<2>(t));
+    //     return mesh_cube;
+    // }
 
     pair<double, double> intersect_ray_sphere(Vector p0, Vector D, Object sphere)
     {
@@ -338,7 +281,7 @@ typedef struct Scene
 
     pair<double, Vector> intersect_ray_cube(Vector p0, Vector D, Object cube)
     {
-        Object mesh_cube = mesh(cube);
+        // Object mesh_cube = mesh(cube);
         int v1, v2, v3;
         Vector P1, P2, P3;
         Vector r1, r2;
@@ -349,16 +292,16 @@ typedef struct Scene
         double closest_t = INFINITY;
         Vector normal_closest_face;
         double EPS = 0.0000001;
-        for (int i = 0; i < mesh_cube.LF.size(); i++)
+        for (int i = 0; i < cube.LF.size(); i++)
         {
-            int idA1 = mesh_cube.LF[i].a1;
-            int idA2 = mesh_cube.LF[i].a2;
-            int idA3 = mesh_cube.LF[i].a3;
+            int idA1 = cube.LF[i].a1;
+            int idA2 = cube.LF[i].a2;
+            int idA3 = cube.LF[i].a3;
 
-            int idV11 = mesh_cube.LA[idA1].v1 + 1;
-            int idV12 = mesh_cube.LA[idA1].v2 + 1;
-            int idV21 = mesh_cube.LA[idA2].v1 + 1;
-            int idV22 = mesh_cube.LA[idA2].v2 + 1;
+            int idV11 = cube.LA[idA1].v1 + 1;
+            int idV12 = cube.LA[idA1].v2 + 1;
+            int idV21 = cube.LA[idA2].v1 + 1;
+            int idV22 = cube.LA[idA2].v2 + 1;
 
             int n1 = idV11 * idV12;
             int n = n1 / idV21;
@@ -379,17 +322,17 @@ typedef struct Scene
             v2 = v2 - 1;
             v3 = v3 - 1;
 
-            P1.x = mesh_cube.LV[v1].x;
-            P1.y = mesh_cube.LV[v1].y;
-            P1.z = mesh_cube.LV[v1].z;
+            P1.x = cube.LV[v1].x;
+            P1.y = cube.LV[v1].y;
+            P1.z = cube.LV[v1].z;
 
-            P2.x = mesh_cube.LV[v2].x;
-            P2.y = mesh_cube.LV[v2].y;
-            P2.z = mesh_cube.LV[v2].z;
+            P2.x = cube.LV[v2].x;
+            P2.y = cube.LV[v2].y;
+            P2.z = cube.LV[v2].z;
 
-            P3.x = mesh_cube.LV[v3].x;
-            P3.y = mesh_cube.LV[v3].y;
-            P3.z = mesh_cube.LV[v3].z;
+            P3.x = cube.LV[v3].x;
+            P3.y = cube.LV[v3].y;
+            P3.z = cube.LV[v3].z;
 
             r1 = sub_vector(P2, P1);
             r2 = sub_vector(P3, P1);

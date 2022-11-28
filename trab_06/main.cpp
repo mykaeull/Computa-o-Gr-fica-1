@@ -259,7 +259,16 @@ int main()
     Object sphere1("sphere", 5., transform_W_to_C(M_C_to_W, Vector(0, 95, -200., 1.), 1), 10., Vector(0.854, 0.647, 0.125, 0), Vector(0.854, 0.647, 0.125, 0), Vector(0.854, 0.647, 0.125, 0));
     objects.push_back(sphere1);
 
-    Object cube("cube", 40., 10., transform_W_to_C(M_C_to_W, transform_W_to_C(M_rotation, Vector(0, -150., -165., 1.), 1), 1), Vector(1., 0.078, 0.576, 0), Vector(1., 0.078, 0.576, 0), Vector(1., 0.078, 0.576, 0));
+    Object cube("cube", 40., 10., Vector(0, -150., -165., 1.), Vector(1., 0.078, 0.576, 0), Vector(1., 0.078, 0.576, 0), Vector(1., 0.078, 0.576, 0));
+    cube.base = transform_W_to_C(M_C_to_W, transform_W_to_C(M_rotation, cube.base, 1), 1);
+    cube.LV[0] = transform_W_to_C(M_C_to_W, transform_W_to_C(M_rotation, cube.LV[0], 1), 1);
+    cube.LV[1] = transform_W_to_C(M_C_to_W, transform_W_to_C(M_rotation, cube.LV[1], 1), 1);
+    cube.LV[2] = transform_W_to_C(M_C_to_W, transform_W_to_C(M_rotation, cube.LV[2], 1), 1);
+    cube.LV[3] = transform_W_to_C(M_C_to_W, transform_W_to_C(M_rotation, cube.LV[3], 1), 1);
+    cube.LV[4] = transform_W_to_C(M_C_to_W, transform_W_to_C(M_rotation, cube.LV[4], 1), 1);
+    cube.LV[5] = transform_W_to_C(M_C_to_W, transform_W_to_C(M_rotation, cube.LV[5], 1), 1);
+    cube.LV[6] = transform_W_to_C(M_C_to_W, transform_W_to_C(M_rotation, cube.LV[6], 1), 1);
+    cube.LV[7] = transform_W_to_C(M_C_to_W, transform_W_to_C(M_rotation, cube.LV[7], 1), 1);
     objects.push_back(cube);
 
     Light point_light(Vector(0.7, 0.7, 0.7, 0), transform_W_to_C(M_C_to_W, Vector(-100, 140., -20., 1.), 1), "point");
