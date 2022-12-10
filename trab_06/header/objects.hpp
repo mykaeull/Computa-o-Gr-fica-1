@@ -3,6 +3,13 @@
 #include "./vector.hpp"
 #include "./mesh_struct.hpp"
 #include <bits/stdc++.h>
+#include "./color.hpp"
+
+#define STB_IMAGE_IMPLEMENTATION
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+
+#include "../stb_image.h"
+#include "../stb_image_write.h"
 
 using namespace std;
 
@@ -26,6 +33,10 @@ typedef struct Object
     Vector k_a;
     string position;
     Vector vc;
+    bool texture;
+    Color **matrix_img;
+    int height;
+    int width;
 
     tuple<vector<Vector>, vector<VertexIndex>, vector<EdgeIndex>> cube_maping(Vector b, double edge_obj)
     {
@@ -94,7 +105,7 @@ typedef struct Object
         k_a = K_a;
     }
 
-    Object(string object_type, Vector P_pi, Vector n, double s, Vector K_d, Vector K_e, Vector K_a, string object_position) // Plane
+    Object(string object_type, Vector P_pi, Vector n, double s, Vector K_d, Vector K_e, Vector K_a, bool have_texture, const char *path_image) // Plane
     {
         type = object_type;
         p_pi = P_pi;
@@ -103,7 +114,35 @@ typedef struct Object
         k_d = K_d;
         k_e = K_e;
         k_a = K_a;
-        position = object_position;
+        texture = have_texture;
+        if (have_texture)
+        {
+            int w, h, chan;
+            Color **matrix_image;
+
+            unsigned char *image = stbi_load(path_image, &w, &h, &chan, 3);
+            matrix_image = new Color *[h];
+            for (int i = 0; i < h; i++)
+            {
+                matrix_image[i] = new Color[w];
+            }
+            for (int i = 0; i < h; i++)
+            {
+                for (int j = 0; j < w; j++)
+                {
+                    matrix_image[i][j].r = (double)image[j * 3 + w * i * 3];
+                    matrix_image[i][j].g = (double)image[j * 3 + w * i * 3 + 1];
+                    matrix_image[i][j].b = (double)image[j * 3 + w * i * 3 + 2];
+                }
+            }
+
+            height = h;
+            width = w;
+
+            stbi_image_free(image);
+
+            matrix_img = matrix_image;
+        }
     }
 
     Object(string object_type, double r, Vector b, double height, Vector uu, double s, Vector K_d, Vector K_e, Vector K_a) // cylinder or cone

@@ -8,12 +8,6 @@
 #include "./header/lights.hpp"
 #include "./header/scene.hpp"
 
-#define STB_IMAGE_IMPLEMENTATION
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-
-#include "stb_image.h"
-#include "stb_image_write.h"
-
 typedef unsigned char int8;
 #define CHANNEL_NUM 3
 
@@ -192,6 +186,27 @@ vector<vector<double>> matrix_scale(double x, double y, double z)
     return mult_matrix(M_Scale, matrix_I());
 }
 
+vector<vector<double>> matrix_shear(string axis, double angle)
+{
+    vector<vector<double>> M_shear;
+    if (axis == "x")
+    {
+        M_shear.push_back({1., tan(angle), 0., 0.});
+        M_shear.push_back({0., 1., 0., 0.});
+        M_shear.push_back({0., 0., 1., 0.});
+        M_shear.push_back({0., 0., 0., 1.});
+
+        return mult_matrix(M_shear, matrix_I());
+    }
+
+    M_shear.push_back({1., 0., 0., 0.});
+    M_shear.push_back({tan(angle), 1., 0., 0.});
+    M_shear.push_back({0., 0., 1., 0.});
+    M_shear.push_back({0., 0., 0., 1.});
+
+    return mult_matrix(M_shear, matrix_I());
+}
+
 void transform_plane(Object *plane, vector<vector<double>> M)
 {
     plane->p_pi = transform_W_to_C(M, plane->p_pi, 1);
@@ -241,15 +256,15 @@ int main()
 
     M_C_to_W = matrix_C_to_W(O, Vector(0, -60, -200, 0), Vector(0., 100., 0., 1));
 
-    Object *plane1 = new Object("plane", Vector(0, -150, 0, 1), Vector(0., 1., 0., 0), 1., Vector(0.933, 0.933, 0.933, 0), Vector(0.933, 0.933, 0.933, 0), Vector(0.933, 0.933, 0.933, 0), "floor");
+    Object *plane1 = new Object("plane", Vector(0, -150, 0, 1), Vector(0., 1., 0., 0), 1., Vector(0.933, 0.933, 0.933, 0), Vector(0.933, 0.933, 0.933, 0), Vector(0.933, 0.933, 0.933, 0), true, "azulejo2.png");
     transform_plane(plane1, M_C_to_W);
-    Object *plane2 = new Object("plane", Vector(200, -150, 0, 1), Vector(-1., 0., 0., 0), 1., Vector(0.686, 0.933, 0.933, 0), Vector(0.686, 0.933, 0.933, 0), Vector(0.686, 0.933, 0.933, 0), "right");
+    Object *plane2 = new Object("plane", Vector(200, -150, 0, 1), Vector(-1., 0., 0., 0), 1., Vector(0.686, 0.933, 0.933, 0), Vector(0.686, 0.933, 0.933, 0), Vector(0.686, 0.933, 0.933, 0), false, "");
     transform_plane(plane2, M_C_to_W);
-    Object *plane3 = new Object("plane", Vector(200, -150, -400, 1), Vector(0., 0., 1., 0), 1., Vector(0.686, 0.933, 0.933, 0), Vector(0.686, 0.933, 0.933, 0), Vector(0.686, 0.933, 0.933, 0), "front");
+    Object *plane3 = new Object("plane", Vector(200, -150, -400, 1), Vector(0., 0., 1., 0), 1., Vector(0.686, 0.933, 0.933, 0), Vector(0.686, 0.933, 0.933, 0), Vector(0.686, 0.933, 0.933, 0), false, "");
     transform_plane(plane3, M_C_to_W);
-    Object *plane4 = new Object("plane", Vector(-200, -150, 0, 1), Vector(1., 0., 0., 0), 1., Vector(0.686, 0.933, 0.933, 0), Vector(0.686, 0.933, 0.933, 0), Vector(0.686, 0.933, 0.933, 0), "left");
+    Object *plane4 = new Object("plane", Vector(-200, -150, 0, 1), Vector(1., 0., 0., 0), 1., Vector(0.686, 0.933, 0.933, 0), Vector(0.686, 0.933, 0.933, 0), Vector(0.686, 0.933, 0.933, 0), false, "");
     transform_plane(plane4, M_C_to_W);
-    Object *plane5 = new Object("plane", Vector(0, 150, 0, 1), Vector(0., -1., 0., 0), 1., Vector(0.933, 0.933, 0.933, 0), Vector(0.933, 0.933, 0.933, 0), Vector(0.933, 0.933, 0.933, 0), "ceil");
+    Object *plane5 = new Object("plane", Vector(0, 150, 0, 1), Vector(0., -1., 0., 0), 1., Vector(0.933, 0.933, 0.933, 0), Vector(0.933, 0.933, 0.933, 0), Vector(0.933, 0.933, 0.933, 0), false, "");
     transform_plane(plane5, M_C_to_W);
 
     objects.push_back(*plane1);
@@ -273,7 +288,8 @@ int main()
     Object *cube = new Object("cube", 40., 10., Vector(0, -150., -165., 1.), Vector(1., 0.078, 0.576, 0), Vector(1., 0.078, 0.576, 0), Vector(1., 0.078, 0.576, 0));
     transform_cube(cube, matrix_rotation("z", 3.141592 / 4.));
     transform_cube(cube, matrix_scale(1., 1., 1.));
-    transform_cube(cube, matrix_translatef(60, 20, -200, cube->base));
+    transform_cube(cube, matrix_shear("x", 3.141592 / 4.));
+    transform_cube(cube, matrix_translatef(-70, -50, -130, cube->base));
     transform_cube(cube, M_C_to_W);
     objects.push_back(*cube);
 
@@ -293,27 +309,6 @@ int main()
 
     Scene scene(objects, canva, lights);
 
-    int w, h, chan;
-    Color **matrix_image;
-
-    unsigned char *image = stbi_load("madeira.png", &w, &h, &chan, 3);
-    matrix_image = new Color *[h];
-    for (int i = 0; i < h; i++)
-    {
-        matrix_image[i] = new Color[w];
-    }
-    for (int i = 0; i < h; i++)
-    {
-        for (int j = 0; j < w; j++)
-        {
-            matrix_image[i][j].r = (double)image[j * 3 + w * i * 3];
-            matrix_image[i][j].g = (double)image[j * 3 + w * i * 3 + 1];
-            matrix_image[i][j].b = (double)image[j * 3 + w * i * 3 + 2];
-        }
-    }
-
-    stbi_image_free(image);
-
     ofstream out("out.ppm");
 
     out << "P3";
@@ -329,9 +324,7 @@ int main()
         {
             Vector D = canva.canvas_to_viewport(x, y);
 
-            Color pixel_image = matrix_image[y % h][x % w];
-
-            Color color = scene.trace_ray(O, D, 0.0, INFINITY, pixel_image);
+            Color color = scene.trace_ray(O, D, 0.0, INFINITY, y, x);
 
             rgb_image[c++] = min((int)color.r, 255);
             rgb_image[c++] = min((int)color.g, 255);

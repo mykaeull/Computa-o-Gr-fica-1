@@ -418,7 +418,7 @@ typedef struct Scene
         return shadow;
     }
 
-    Color define_color(double closest_t, Object object, Vector p0, Vector D, Color pixel_image)
+    Color define_color(double closest_t, Object object, Vector p0, Vector D, int y, int x)
     {
         Vector pi = Vector(p0.x + (D.x * closest_t), p0.y + (D.y * closest_t), p0.z + (D.z * closest_t), 0);
         Vector N;
@@ -460,9 +460,11 @@ typedef struct Scene
         {
             if (object.type == "plane")
             {
-                if (object.position == "floor")
+                if (object.texture)
                 {
-                    return Color(pixel_image.r * (lights[1].intensity.x * object.k_a.x), pixel_image.g * (lights[1].intensity.y * object.k_a.y), pixel_image.b * (lights[1].intensity.z * object.k_a.z));
+                    int h = object.height;
+                    int w = object.width;
+                    return Color(object.matrix_img[y % h][x % w].r * (lights[1].intensity.x * object.k_a.x), object.matrix_img[y % h][x % w].g * (lights[1].intensity.y * object.k_a.y), object.matrix_img[y % h][x % w].b * (lights[1].intensity.z * object.k_a.z));
                 }
             }
             return Color(255 * (lights[1].intensity.x * object.k_a.x), 255 * (lights[1].intensity.y * object.k_a.y), 255 * (lights[1].intensity.z * object.k_a.z));
@@ -472,16 +474,18 @@ typedef struct Scene
 
         if (object.type == "plane")
         {
-            if (object.position == "floor")
+            if (object.texture)
             {
-                return Color(pixel_image.r * i.x, pixel_image.g * i.y, pixel_image.b * i.z);
+                int h = object.height;
+                int w = object.width;
+                return Color(object.matrix_img[y % h][x % w].r * i.x, object.matrix_img[y % h][x % w].g * i.y, object.matrix_img[y % h][x % w].b * i.z);
             }
         }
 
         return Color(255 * i.x, 255 * i.y, 255 * i.z);
     }
 
-    Color trace_ray(Vector p0, Vector D, double t_min, double t_max, Color pixel_image)
+    Color trace_ray(Vector p0, Vector D, double t_min, double t_max, int y, int x)
     {
         double length_D = length(D);
         D = Vector(D.x / length_D, D.y / length_D, D.z / length_D, 0);
@@ -538,10 +542,10 @@ typedef struct Scene
                 }
                 Vector N_base = Vector(-closest_cylinder.u.x, -closest_cylinder.u.y, -closest_cylinder.u.z, 0);
                 Vector P_pi_base = closest_cylinder.base;
-                Object plane_base("plane", P_pi_base, N_base, objects[i].specular, objects[i].k_d, objects[i].k_e, objects[i].k_a, "base");
+                Object plane_base("plane", P_pi_base, N_base, objects[i].specular, objects[i].k_d, objects[i].k_e, objects[i].k_a, false, "");
                 Vector N_cover = closest_cylinder.u;
                 Vector P_pi_cover = Vector(closest_cylinder.base.x + (closest_cylinder.u.x * closest_cylinder.h), closest_cylinder.base.y + (closest_cylinder.u.y * closest_cylinder.h), closest_cylinder.base.z + (closest_cylinder.u.z * closest_cylinder.h), 0);
-                Object plane_top("plane", P_pi_cover, N_cover, objects[i].specular, objects[i].k_d, objects[i].k_e, objects[i].k_a, "cover");
+                Object plane_top("plane", P_pi_cover, N_cover, objects[i].specular, objects[i].k_d, objects[i].k_e, objects[i].k_a, false, "");
                 t1 = intersect_ray_base(p0, D, plane_base, closest_cylinder);
                 t2 = intersect_ray_base(p0, D, plane_top, closest_cylinder);
 
@@ -571,7 +575,7 @@ typedef struct Scene
                 }
                 Vector N_base = Vector(closest_cone.u.x, closest_cone.u.y, closest_cone.u.z, 0);
                 Vector P_pi_base = closest_cone.base;
-                Object plane_base("plane", P_pi_base, N_base, objects[i].specular, objects[i].k_d, objects[i].k_e, objects[i].k_a, "base");
+                Object plane_base("plane", P_pi_base, N_base, objects[i].specular, objects[i].k_d, objects[i].k_e, objects[i].k_a, false, "");
                 t1 = intersect_ray_base(p0, D, plane_base, closest_cone);
                 if ((t1 > t_min && t1 < t_max) && t1 < closest_t_cone)
                 {
@@ -616,7 +620,7 @@ typedef struct Scene
             }
         }
 
-        return define_color(closest_t - EPS, closest_object, p0, D, pixel_image);
+        return define_color(closest_t - EPS, closest_object, p0, D, y, x);
     }
 } Scene;
 
