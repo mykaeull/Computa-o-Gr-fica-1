@@ -94,15 +94,21 @@ typedef struct Object
         return t;
     }
 
+    Vector convert_rgb(Vector rgb_color)
+    {
+        // cout << rgb_color.x / 255 << " " << rgb_color.y / 255 << " " << rgb_color.z / 255 << "\n";
+        return Vector(rgb_color.x / 255., rgb_color.y / 255., rgb_color.z / 255., 0.);
+    }
+
     Object(string object_type, double r, Vector c, double s, Vector K_d, Vector K_e, Vector K_a) // Sphere
     {
         type = object_type;
         radius = r;
         center = c;
         specular = s;
-        k_d = K_d;
-        k_e = K_e;
-        k_a = K_a;
+        k_d = convert_rgb(K_d);
+        k_e = convert_rgb(K_e);
+        k_a = convert_rgb(K_a);
     }
 
     Object(string object_type, Vector P_pi, Vector n, double s, Vector K_d, Vector K_e, Vector K_a, bool have_texture, const char *path_image) // Plane
@@ -111,9 +117,9 @@ typedef struct Object
         p_pi = P_pi;
         normal = n;
         specular = s;
-        k_d = K_d;
-        k_e = K_e;
-        k_a = K_a;
+        k_d = convert_rgb(K_d);
+        k_e = convert_rgb(K_e);
+        k_a = convert_rgb(K_a);
         texture = have_texture;
         if (have_texture)
         {
@@ -153,9 +159,9 @@ typedef struct Object
         h = height;
         u = uu;
         specular = s;
-        k_d = K_d;
-        k_e = K_e;
-        k_a = K_a;
+        k_d = convert_rgb(K_d);
+        k_e = convert_rgb(K_e);
+        k_a = convert_rgb(K_a);
         vc = Vector(b.x + (height * uu.x), b.y + (height * uu.y), b.z + (height * uu.z), 1); // case cone
     }
 
@@ -165,9 +171,9 @@ typedef struct Object
         base = b; // centro da base
         edge = edge_obj;
         specular = s;
-        k_d = K_d;
-        k_e = K_e;
-        k_a = K_a;
+        k_d = convert_rgb(K_d);
+        k_e = convert_rgb(K_e);
+        k_a = convert_rgb(K_a);
         auto t = cube_maping(b, edge_obj);
         LV = get<0>(t);
         LA = get<1>(t);
