@@ -7,16 +7,10 @@
 #include "./header/objects.hpp"
 #include "./header/lights.hpp"
 #include "./header/scene.hpp"
-#include "./header/SDLEngine.hpp"
-#include <SDL2/SDL.h>
-
-#define LARGURA_TELA 500
-#define ALTURA_TELA 500
-#define LARGURA_CANVAS 500
-#define ALTURA_CANVAS 500
+#include <SFML/Graphics.hpp>
 
 typedef unsigned char int8;
-#define CHANNEL_NUM 3
+#define CHANNEL_NUM 4
 
 using namespace std;
 
@@ -284,253 +278,253 @@ int main()
 
     // M_C_to_W = matrix_C_to_W(Vector(0., 0., 0., 1), Vector(40., 115., -550., 0), Vector(0., 1., 0., 1));
 
-    // Object *down_plane = new Object("plane", Vector(0, -150, 0, 1), Vector(0., 1., 0., 0), 1., Vector(236., 219., 182., 0), Vector(236., 219., 182., 0), Vector(236., 219., 182., 0), true, "madeira5.png");
-    // transform_plane(down_plane, M_C_to_W);
-    // Object *right_plane = new Object("plane", Vector(600, -150, 0, 1), Vector(-1., 0., 0., 0), 1., Vector(236., 219., 182., 0), Vector(236., 219., 182., 0), Vector(236., 219., 182., 0), false, "");
-    // transform_plane(right_plane, M_C_to_W);
-    // Object *back_plane = new Object("plane", Vector(600, -150, -600, 1), Vector(0., 0., 1., 0), 1., Vector(236., 219., 182., 0), Vector(236., 219., 182., 0), Vector(236., 219., 182., 0), false, "");
-    // transform_plane(back_plane, M_C_to_W);
-    // Object *left_plane = new Object("plane", Vector(-600, -150, 0, 1), Vector(1., 0., 0., 0), 1., Vector(236., 219., 182., 0), Vector(236., 219., 182., 0), Vector(236., 219., 182., 0), false, "");
-    // transform_plane(left_plane, M_C_to_W);
+    Object *down_plane = new Object("plane", Vector(0, -150, 0, 1), Vector(0., 1., 0., 0), 1., Vector(236., 219., 182., 0), Vector(236., 219., 182., 0), Vector(236., 219., 182., 0), true, "madeira5.png");
+    transform_plane(down_plane, M_C_to_W);
+    Object *right_plane = new Object("plane", Vector(600, -150, 0, 1), Vector(-1., 0., 0., 0), 1., Vector(236., 219., 182., 0), Vector(236., 219., 182., 0), Vector(236., 219., 182., 0), false, "");
+    transform_plane(right_plane, M_C_to_W);
+    Object *back_plane = new Object("plane", Vector(600, -150, -600, 1), Vector(0., 0., 1., 0), 1., Vector(236., 219., 182., 0), Vector(236., 219., 182., 0), Vector(236., 219., 182., 0), false, "");
+    transform_plane(back_plane, M_C_to_W);
+    Object *left_plane = new Object("plane", Vector(-600, -150, 0, 1), Vector(1., 0., 0., 0), 1., Vector(236., 219., 182., 0), Vector(236., 219., 182., 0), Vector(236., 219., 182., 0), false, "");
+    transform_plane(left_plane, M_C_to_W);
 
-    // objects.push_back(*down_plane);
-    // objects.push_back(*right_plane);
-    // objects.push_back(*back_plane);
-    // objects.push_back(*left_plane);
+    objects.push_back(*down_plane);
+    objects.push_back(*right_plane);
+    objects.push_back(*back_plane);
+    objects.push_back(*left_plane);
 
-    // Object *tree_trunk = new Object("cylinder", 5., Vector(0, -150, 350., 1.), 90., Vector(0, 1., 0, 0), 10., Vector(127., 80., 47., 0), Vector(127., 80., 47., 0), Vector(127., 80., 47., 0));
-    // transform_cylinder(tree_trunk, M_C_to_W);
-    // objects.push_back(*tree_trunk);
+    Object *tree_trunk = new Object("cylinder", 5., Vector(0, -150, 350., 1.), 90., Vector(0, 1., 0, 0), 10., Vector(127., 80., 47., 0), Vector(127., 80., 47., 0), Vector(127., 80., 47., 0));
+    transform_cylinder(tree_trunk, M_C_to_W);
+    objects.push_back(*tree_trunk);
 
-    // Object *tree_base = new Object("cube", 10., 10., Vector(0., 0., 0., 1.), Vector(73., 17., 13., 0), Vector(73., 17., 13., 0), Vector(73., 17., 13., 0));
-    // transform_cube(tree_base, matrix_scale(100. / 10., 30. / 10., 1.));
-    // transform_cube(tree_base, matrix_translatef(0, -135, 350., tree_base->base));
-    // transform_cube(tree_base, M_C_to_W);
-    // objects.push_back(*tree_base);
+    Object *tree_base = new Object("cube", 10., 10., Vector(0., 0., 0., 1.), Vector(73., 17., 13., 0), Vector(73., 17., 13., 0), Vector(73., 17., 13., 0));
+    transform_cube(tree_base, matrix_scale(100. / 10., 30. / 10., 1.));
+    transform_cube(tree_base, matrix_translatef(0, -135, 350., tree_base->base));
+    transform_cube(tree_base, M_C_to_W);
+    objects.push_back(*tree_base);
 
     Object *tree_top = new Object("cone", 75, Vector(0, -60, 350, 1.), 150, Vector(0, 1., 0, 0), 10., Vector(37., 83., 19., 0), Vector(37., 83., 19., 0), Vector(37., 83., 19., 0));
     transform_cone(tree_top, M_C_to_W);
     objects.push_back(*tree_top);
 
-    // Object *tree_ball = new Object("sphere", 5., Vector(0, 95, 350., 1.), 10., Vector(247., 212., 36., 0), Vector(247., 212., 36., 0), Vector(247., 212., 36., 0));
-    // transform_sphere(tree_ball, M_C_to_W);
-    // objects.push_back(*tree_ball);
+    Object *tree_ball = new Object("sphere", 5., Vector(0, 95, 350., 1.), 10., Vector(247., 212., 36., 0), Vector(247., 212., 36., 0), Vector(247., 212., 36., 0));
+    transform_sphere(tree_ball, M_C_to_W);
+    objects.push_back(*tree_ball);
 
-    // Object *door = new Object("cube", 20., 10., Vector(-400, 100., -600., 1.), Vector(128., 69., 22., 0), Vector(128., 69., 22., 0), Vector(128., 69., 22., 0));
-    // transform_cube(door, matrix_scale(200. / 20., 425. / 20., 1.));
-    // transform_cube(door, matrix_translatef(-500., 65., -590., door->base));
-    // transform_cube(door, M_C_to_W);
-    // objects.push_back(*door);
+    Object *door = new Object("cube", 20., 10., Vector(-400, 100., -600., 1.), Vector(128., 69., 22., 0), Vector(128., 69., 22., 0), Vector(128., 69., 22., 0));
+    transform_cube(door, matrix_scale(200. / 20., 425. / 20., 1.));
+    transform_cube(door, matrix_translatef(-500., 65., -590., door->base));
+    transform_cube(door, M_C_to_W);
+    objects.push_back(*door);
 
-    // Object *table_leg1 = new Object("cube", 10., 10., Vector(0., 0., 0., 1.), Vector(218., 161., 17., 0), Vector(218., 161., 17., 0), Vector(218., 161., 17., 0));
-    // transform_cube(table_leg1, matrix_scale(15. / 10., 190. / 10., 15. / 10.));
-    // transform_cube(table_leg1, matrix_translatef(-165., -55., -580., table_leg1->base));
-    // transform_cube(table_leg1, M_C_to_W);
-    // objects.push_back(*table_leg1);
+    Object *table_leg1 = new Object("cube", 10., 10., Vector(0., 0., 0., 1.), Vector(218., 161., 17., 0), Vector(218., 161., 17., 0), Vector(218., 161., 17., 0));
+    transform_cube(table_leg1, matrix_scale(15. / 10., 190. / 10., 15. / 10.));
+    transform_cube(table_leg1, matrix_translatef(-165., -55., -580., table_leg1->base));
+    transform_cube(table_leg1, M_C_to_W);
+    objects.push_back(*table_leg1);
 
-    // Object *table_leg2 = new Object("cube", 10., 10., Vector(0., 0., 0., 1.), Vector(218., 161., 17., 0), Vector(218., 161., 17., 0), Vector(218., 161., 17., 0));
-    // transform_cube(table_leg2, matrix_scale(15. / 10., 190. / 10., 15. / 10.));
-    // transform_cube(table_leg2, matrix_translatef(165., -55., -580., table_leg2->base));
-    // transform_cube(table_leg2, M_C_to_W);
-    // objects.push_back(*table_leg2);
+    Object *table_leg2 = new Object("cube", 10., 10., Vector(0., 0., 0., 1.), Vector(218., 161., 17., 0), Vector(218., 161., 17., 0), Vector(218., 161., 17., 0));
+    transform_cube(table_leg2, matrix_scale(15. / 10., 190. / 10., 15. / 10.));
+    transform_cube(table_leg2, matrix_translatef(165., -55., -580., table_leg2->base));
+    transform_cube(table_leg2, M_C_to_W);
+    objects.push_back(*table_leg2);
 
-    // Object *table_leg3 = new Object("cube", 10., 10., Vector(0., 0., 0., 1.), Vector(218., 161., 17., 0), Vector(218., 161., 17., 0), Vector(218., 161., 17., 0));
-    // transform_cube(table_leg3, matrix_scale(15. / 10., 190. / 10., 15. / 10.));
-    // transform_cube(table_leg3, matrix_translatef(-165., -55., -480., table_leg3->base));
-    // transform_cube(table_leg3, M_C_to_W);
-    // objects.push_back(*table_leg3);
+    Object *table_leg3 = new Object("cube", 10., 10., Vector(0., 0., 0., 1.), Vector(218., 161., 17., 0), Vector(218., 161., 17., 0), Vector(218., 161., 17., 0));
+    transform_cube(table_leg3, matrix_scale(15. / 10., 190. / 10., 15. / 10.));
+    transform_cube(table_leg3, matrix_translatef(-165., -55., -480., table_leg3->base));
+    transform_cube(table_leg3, M_C_to_W);
+    objects.push_back(*table_leg3);
 
-    // Object *table_leg4 = new Object("cube", 10., 10., Vector(0., 0., 0., 1.), Vector(218., 161., 17., 0), Vector(218., 161., 17., 0), Vector(218., 161., 17., 0));
-    // transform_cube(table_leg4, matrix_scale(15. / 10., 190. / 10., 15. / 10.));
-    // transform_cube(table_leg4, matrix_translatef(165., -55., -480., table_leg4->base));
-    // transform_cube(table_leg4, M_C_to_W);
-    // objects.push_back(*table_leg4);
+    Object *table_leg4 = new Object("cube", 10., 10., Vector(0., 0., 0., 1.), Vector(218., 161., 17., 0), Vector(218., 161., 17., 0), Vector(218., 161., 17., 0));
+    transform_cube(table_leg4, matrix_scale(15. / 10., 190. / 10., 15. / 10.));
+    transform_cube(table_leg4, matrix_translatef(165., -55., -480., table_leg4->base));
+    transform_cube(table_leg4, M_C_to_W);
+    objects.push_back(*table_leg4);
 
-    // Object *table_cover = new Object("cube", 10., 10., Vector(0., 0., 0., 1.), Vector(218., 161., 17., 0), Vector(218., 161., 17., 0), Vector(218., 161., 17., 0));
-    // transform_cube(table_cover, matrix_scale(350. / 10., 15. / 10., 120. / 10.));
-    // transform_cube(table_cover, matrix_translatef(0., 50., -530., table_cover->base));
-    // transform_cube(table_cover, M_C_to_W);
-    // objects.push_back(*table_cover);
+    Object *table_cover = new Object("cube", 10., 10., Vector(0., 0., 0., 1.), Vector(218., 161., 17., 0), Vector(218., 161., 17., 0), Vector(218., 161., 17., 0));
+    transform_cube(table_cover, matrix_scale(350. / 10., 15. / 10., 120. / 10.));
+    transform_cube(table_cover, matrix_translatef(0., 50., -530., table_cover->base));
+    transform_cube(table_cover, M_C_to_W);
+    objects.push_back(*table_cover);
 
-    // Object *pc_base = new Object("cube", 10., 10., Vector(0., 0., 0., 1.), Vector(179., 183., 186., 0), Vector(179., 183., 186., 0), Vector(179., 183., 186., 0));
-    // transform_cube(pc_base, matrix_scale(50. / 10., 5. / 10., 30. / 10.));
-    // transform_cube(pc_base, matrix_translatef(40., 60., -550., pc_base->base));
-    // transform_cube(pc_base, M_C_to_W);
-    // objects.push_back(*pc_base);
+    Object *pc_base = new Object("cube", 10., 10., Vector(0., 0., 0., 1.), Vector(179., 183., 186., 0), Vector(179., 183., 186., 0), Vector(179., 183., 186., 0));
+    transform_cube(pc_base, matrix_scale(50. / 10., 5. / 10., 30. / 10.));
+    transform_cube(pc_base, matrix_translatef(40., 60., -550., pc_base->base));
+    transform_cube(pc_base, M_C_to_W);
+    objects.push_back(*pc_base);
 
-    // Object *pc_suport_bar = new Object("cylinder", 5., Vector(40., 60., -550., 1.), 25., Vector(0, 1., 0, 0), 10., Vector(179., 183., 186., 0), Vector(179., 183., 186., 0), Vector(179., 183., 186., 0));
-    // transform_cylinder(pc_suport_bar, M_C_to_W);
-    // objects.push_back(*pc_suport_bar);
+    Object *pc_suport_bar = new Object("cylinder", 5., Vector(40., 60., -550., 1.), 25., Vector(0, 1., 0, 0), 10., Vector(179., 183., 186., 0), Vector(179., 183., 186., 0), Vector(179., 183., 186., 0));
+    transform_cylinder(pc_suport_bar, M_C_to_W);
+    objects.push_back(*pc_suport_bar);
 
-    // Object *pc_screen = new Object("cube", 10., 10., Vector(0., 0., 0., 1.), Vector(38., 38., 38., 0), Vector(38., 38., 38., 0), Vector(38., 38., 38., 0));
-    // transform_cube(pc_screen, matrix_scale(150. / 10., 80. / 10., 15. / 10.));
-    // transform_cube(pc_screen, matrix_translatef(40., 115., -550., pc_screen->base));
-    // transform_cube(pc_screen, M_C_to_W);
-    // objects.push_back(*pc_screen);
+    Object *pc_screen = new Object("cube", 10., 10., Vector(0., 0., 0., 1.), Vector(38., 38., 38., 0), Vector(38., 38., 38., 0), Vector(38., 38., 38., 0));
+    transform_cube(pc_screen, matrix_scale(150. / 10., 80. / 10., 15. / 10.));
+    transform_cube(pc_screen, matrix_translatef(40., 115., -550., pc_screen->base));
+    transform_cube(pc_screen, M_C_to_W);
+    objects.push_back(*pc_screen);
 
-    // Object *pc_keyboard = new Object("cube", 10., 10., Vector(0., 0., 0., 1.), Vector(98., 102., 111., 0), Vector(98., 102., 111., 0), Vector(98., 102., 111., 0));
-    // transform_cube(pc_keyboard, matrix_scale(100. / 10., 5. / 10., 30. / 10.));
-    // transform_cube(pc_keyboard, matrix_translatef(40., 60., -510., pc_keyboard->base));
-    // transform_cube(pc_keyboard, M_C_to_W);
-    // objects.push_back(*pc_keyboard);
+    Object *pc_keyboard = new Object("cube", 10., 10., Vector(0., 0., 0., 1.), Vector(98., 102., 111., 0), Vector(98., 102., 111., 0), Vector(98., 102., 111., 0));
+    transform_cube(pc_keyboard, matrix_scale(100. / 10., 5. / 10., 30. / 10.));
+    transform_cube(pc_keyboard, matrix_translatef(40., 60., -510., pc_keyboard->base));
+    transform_cube(pc_keyboard, M_C_to_W);
+    objects.push_back(*pc_keyboard);
 
-    // Object *pc_mouse = new Object("cube", 10., 10., Vector(0., 0., 0., 1.), Vector(98., 102., 111., 0), Vector(98., 102., 111., 0), Vector(98., 102., 111., 0));
-    // transform_cube(pc_mouse, matrix_scale(10. / 10., 5. / 10., 10. / 10.));
-    // transform_cube(pc_mouse, matrix_translatef(125., 60., -510., pc_mouse->base));
-    // transform_cube(pc_mouse, M_C_to_W);
-    // objects.push_back(*pc_mouse);
+    Object *pc_mouse = new Object("cube", 10., 10., Vector(0., 0., 0., 1.), Vector(98., 102., 111., 0), Vector(98., 102., 111., 0), Vector(98., 102., 111., 0));
+    transform_cube(pc_mouse, matrix_scale(10. / 10., 5. / 10., 10. / 10.));
+    transform_cube(pc_mouse, matrix_translatef(125., 60., -510., pc_mouse->base));
+    transform_cube(pc_mouse, M_C_to_W);
+    objects.push_back(*pc_mouse);
 
-    // Object *pc_cpu = new Object("cube", 10., 10., Vector(0., 0., 0., 1.), Vector(62., 70., 73., 0), Vector(62., 70., 73., 0), Vector(62., 70., 73., 0));
-    // transform_cube(pc_cpu, matrix_scale(50. / 10., 80. / 10., 150. / 10.));
-    // transform_cube(pc_cpu, matrix_translatef(-90., 95., -570., pc_cpu->base));
-    // transform_cube(pc_cpu, M_C_to_W);
-    // objects.push_back(*pc_cpu);
+    Object *pc_cpu = new Object("cube", 10., 10., Vector(0., 0., 0., 1.), Vector(62., 70., 73., 0), Vector(62., 70., 73., 0), Vector(62., 70., 73., 0));
+    transform_cube(pc_cpu, matrix_scale(50. / 10., 80. / 10., 150. / 10.));
+    transform_cube(pc_cpu, matrix_translatef(-90., 95., -570., pc_cpu->base));
+    transform_cube(pc_cpu, M_C_to_W);
+    objects.push_back(*pc_cpu);
 
-    // Object *chair_leg1 = new Object("cube", 10., 10., Vector(0., 0., 0., 1.), Vector(218., 161., 17., 0), Vector(218., 161., 17., 0), Vector(218., 161., 17., 0));
-    // transform_cube(chair_leg1, matrix_scale(15. / 10., 120. / 10., 15. / 10.));
-    // transform_cube(chair_leg1, matrix_translatef(-60., -90., -430., chair_leg1->base));
-    // transform_cube(chair_leg1, M_C_to_W);
-    // objects.push_back(*chair_leg1);
+    Object *chair_leg1 = new Object("cube", 10., 10., Vector(0., 0., 0., 1.), Vector(218., 161., 17., 0), Vector(218., 161., 17., 0), Vector(218., 161., 17., 0));
+    transform_cube(chair_leg1, matrix_scale(15. / 10., 120. / 10., 15. / 10.));
+    transform_cube(chair_leg1, matrix_translatef(-60., -90., -430., chair_leg1->base));
+    transform_cube(chair_leg1, M_C_to_W);
+    objects.push_back(*chair_leg1);
 
-    // Object *chair_leg2 = new Object("cube", 10., 10., Vector(0., 0., 0., 1.), Vector(218., 161., 17., 0), Vector(218., 161., 17., 0), Vector(218., 161., 17., 0));
-    // transform_cube(chair_leg2, matrix_scale(15. / 10., 120. / 10., 15. / 10.));
-    // transform_cube(chair_leg2, matrix_translatef(60., -90., -430., chair_leg2->base));
-    // transform_cube(chair_leg2, M_C_to_W);
-    // objects.push_back(*chair_leg2);
+    Object *chair_leg2 = new Object("cube", 10., 10., Vector(0., 0., 0., 1.), Vector(218., 161., 17., 0), Vector(218., 161., 17., 0), Vector(218., 161., 17., 0));
+    transform_cube(chair_leg2, matrix_scale(15. / 10., 120. / 10., 15. / 10.));
+    transform_cube(chair_leg2, matrix_translatef(60., -90., -430., chair_leg2->base));
+    transform_cube(chair_leg2, M_C_to_W);
+    objects.push_back(*chair_leg2);
 
-    // Object *chair_leg3 = new Object("cube", 10., 10., Vector(0., 0., 0., 1.), Vector(218., 161., 17., 0), Vector(218., 161., 17., 0), Vector(218., 161., 17., 0));
-    // transform_cube(chair_leg3, matrix_scale(15. / 10., 120. / 10., 15. / 10.));
-    // transform_cube(chair_leg3, matrix_translatef(-60., -90., -330., chair_leg3->base));
-    // transform_cube(chair_leg3, M_C_to_W);
-    // objects.push_back(*chair_leg3);
+    Object *chair_leg3 = new Object("cube", 10., 10., Vector(0., 0., 0., 1.), Vector(218., 161., 17., 0), Vector(218., 161., 17., 0), Vector(218., 161., 17., 0));
+    transform_cube(chair_leg3, matrix_scale(15. / 10., 120. / 10., 15. / 10.));
+    transform_cube(chair_leg3, matrix_translatef(-60., -90., -330., chair_leg3->base));
+    transform_cube(chair_leg3, M_C_to_W);
+    objects.push_back(*chair_leg3);
 
-    // Object *chair_leg4 = new Object("cube", 10., 10., Vector(0., 0., 0., 1.), Vector(218., 161., 17., 0), Vector(218., 161., 17., 0), Vector(218., 161., 17., 0));
-    // transform_cube(chair_leg4, matrix_scale(15. / 10., 120. / 10., 15. / 10.));
-    // transform_cube(chair_leg4, matrix_translatef(60., -90., -330., chair_leg4->base));
-    // transform_cube(chair_leg4, M_C_to_W);
-    // objects.push_back(*chair_leg4);
+    Object *chair_leg4 = new Object("cube", 10., 10., Vector(0., 0., 0., 1.), Vector(218., 161., 17., 0), Vector(218., 161., 17., 0), Vector(218., 161., 17., 0));
+    transform_cube(chair_leg4, matrix_scale(15. / 10., 120. / 10., 15. / 10.));
+    transform_cube(chair_leg4, matrix_translatef(60., -90., -330., chair_leg4->base));
+    transform_cube(chair_leg4, M_C_to_W);
+    objects.push_back(*chair_leg4);
 
-    // Object *chair_cover = new Object("cube", 10., 10., Vector(0., 0., 0., 1.), Vector(180., 81., 226., 0), Vector(180., 81., 226., 0), Vector(180., 81., 226., 0));
-    // transform_cube(chair_cover, matrix_scale(135. / 10., 15. / 10., 120. / 10.));
-    // transform_cube(chair_cover, matrix_translatef(0., -25., -380., chair_cover->base));
-    // transform_cube(chair_cover, M_C_to_W);
-    // objects.push_back(*chair_cover);
+    Object *chair_cover = new Object("cube", 10., 10., Vector(0., 0., 0., 1.), Vector(180., 81., 226., 0), Vector(180., 81., 226., 0), Vector(180., 81., 226., 0));
+    transform_cube(chair_cover, matrix_scale(135. / 10., 15. / 10., 120. / 10.));
+    transform_cube(chair_cover, matrix_translatef(0., -25., -380., chair_cover->base));
+    transform_cube(chair_cover, M_C_to_W);
+    objects.push_back(*chair_cover);
 
-    // Object *chair_back = new Object("cube", 10., 10., Vector(0., 0., 0., 1.), Vector(185., 105., 60., 0), Vector(185., 105., 60., 0), Vector(185., 105., 60., 0));
-    // transform_cube(chair_back, matrix_scale(135. / 10., 140. / 10., 15. / 10.));
-    // transform_cube(chair_back, matrix_translatef(0., 50., -330., chair_back->base));
-    // transform_cube(chair_back, M_C_to_W);
-    // objects.push_back(*chair_back);
+    Object *chair_back = new Object("cube", 10., 10., Vector(0., 0., 0., 1.), Vector(185., 105., 60., 0), Vector(185., 105., 60., 0), Vector(185., 105., 60., 0));
+    transform_cube(chair_back, matrix_scale(135. / 10., 140. / 10., 15. / 10.));
+    transform_cube(chair_back, matrix_translatef(0., 50., -330., chair_back->base));
+    transform_cube(chair_back, M_C_to_W);
+    objects.push_back(*chair_back);
 
-    // Object *comfortable_leg1 = new Object("cylinder", 10., Vector(550, -150., -580., 1.), 10., Vector(0, 1., 0, 0), 10., Vector(185., 105., 60., 0), Vector(185., 105., 60., 0), Vector(185., 105., 60., 0));
-    // transform_cylinder(comfortable_leg1, M_C_to_W);
-    // objects.push_back(*comfortable_leg1);
+    Object *comfortable_leg1 = new Object("cylinder", 10., Vector(550, -150., -580., 1.), 10., Vector(0, 1., 0, 0), 10., Vector(185., 105., 60., 0), Vector(185., 105., 60., 0), Vector(185., 105., 60., 0));
+    transform_cylinder(comfortable_leg1, M_C_to_W);
+    objects.push_back(*comfortable_leg1);
 
-    // Object *comfortable_leg2 = new Object("cylinder", 10., Vector(410., -150., -580., 1.), 10., Vector(0, 1., 0, 0), 10., Vector(185., 105., 60., 0), Vector(185., 105., 60., 0), Vector(185., 105., 60., 0));
-    // transform_cylinder(comfortable_leg2, M_C_to_W);
-    // objects.push_back(*comfortable_leg2);
+    Object *comfortable_leg2 = new Object("cylinder", 10., Vector(410., -150., -580., 1.), 10., Vector(0, 1., 0, 0), 10., Vector(185., 105., 60., 0), Vector(185., 105., 60., 0), Vector(185., 105., 60., 0));
+    transform_cylinder(comfortable_leg2, M_C_to_W);
+    objects.push_back(*comfortable_leg2);
 
-    // Object *comfortable_leg3 = new Object("cylinder", 10., Vector(550., -150., -480., 1.), 10., Vector(0, 1., 0, 0), 10., Vector(185., 105., 60., 0), Vector(185., 105., 60., 0), Vector(185., 105., 60., 0));
-    // transform_cylinder(comfortable_leg3, M_C_to_W);
-    // objects.push_back(*comfortable_leg3);
+    Object *comfortable_leg3 = new Object("cylinder", 10., Vector(550., -150., -480., 1.), 10., Vector(0, 1., 0, 0), 10., Vector(185., 105., 60., 0), Vector(185., 105., 60., 0), Vector(185., 105., 60., 0));
+    transform_cylinder(comfortable_leg3, M_C_to_W);
+    objects.push_back(*comfortable_leg3);
 
-    // Object *comfortable_leg4 = new Object("cylinder", 10., Vector(410., -150., -480., 1.), 10., Vector(0, 1., 0, 0), 10., Vector(185., 105., 60., 0), Vector(185., 105., 60., 0), Vector(185., 105., 60., 0));
-    // transform_cylinder(comfortable_leg4, M_C_to_W);
-    // objects.push_back(*comfortable_leg4);
+    Object *comfortable_leg4 = new Object("cylinder", 10., Vector(410., -150., -480., 1.), 10., Vector(0, 1., 0, 0), 10., Vector(185., 105., 60., 0), Vector(185., 105., 60., 0), Vector(185., 105., 60., 0));
+    transform_cylinder(comfortable_leg4, M_C_to_W);
+    objects.push_back(*comfortable_leg4);
 
-    // Object *comfortable = new Object("cube", 10., 10., Vector(0., 0., 0., 1.), Vector(216., 207., 198., 0), Vector(216., 207., 198., 0), Vector(216., 207., 198., 0));
-    // transform_cube(comfortable, matrix_scale(160. / 10., 150. / 10., 160. / 10.));
-    // transform_cube(comfortable, matrix_translatef(480., -65., -530., comfortable->base));
-    // transform_cube(comfortable, M_C_to_W);
-    // objects.push_back(*comfortable);
+    Object *comfortable = new Object("cube", 10., 10., Vector(0., 0., 0., 1.), Vector(216., 207., 198., 0), Vector(216., 207., 198., 0), Vector(216., 207., 198., 0));
+    transform_cube(comfortable, matrix_scale(160. / 10., 150. / 10., 160. / 10.));
+    transform_cube(comfortable, matrix_translatef(480., -65., -530., comfortable->base));
+    transform_cube(comfortable, M_C_to_W);
+    objects.push_back(*comfortable);
 
-    // Object *comfortable_drawer_top = new Object("cube", 10., 10., Vector(0., 0., 0., 1.), Vector(185., 105., 60., 0), Vector(185., 105., 60., 0), Vector(185., 105., 60., 0));
-    // transform_cube(comfortable_drawer_top, matrix_scale(130. / 10., 50. / 10., 10. / 10.));
-    // transform_cube(comfortable_drawer_top, matrix_translatef(480., -30., -445., comfortable_drawer_top->base));
-    // transform_cube(comfortable_drawer_top, M_C_to_W);
-    // objects.push_back(*comfortable_drawer_top);
+    Object *comfortable_drawer_top = new Object("cube", 10., 10., Vector(0., 0., 0., 1.), Vector(185., 105., 60., 0), Vector(185., 105., 60., 0), Vector(185., 105., 60., 0));
+    transform_cube(comfortable_drawer_top, matrix_scale(130. / 10., 50. / 10., 10. / 10.));
+    transform_cube(comfortable_drawer_top, matrix_translatef(480., -30., -445., comfortable_drawer_top->base));
+    transform_cube(comfortable_drawer_top, M_C_to_W);
+    objects.push_back(*comfortable_drawer_top);
 
-    // Object *comfortable_drawer_bottom = new Object("cube", 10., 10., Vector(0., 0., 0., 1.), Vector(185., 105., 60., 0), Vector(185., 105., 60., 0), Vector(185., 105., 60., 0));
-    // transform_cube(comfortable_drawer_bottom, matrix_scale(130. / 10., 50. / 10., 10. / 10.));
-    // transform_cube(comfortable_drawer_bottom, matrix_translatef(480., -100., -445., comfortable_drawer_bottom->base));
-    // transform_cube(comfortable_drawer_bottom, M_C_to_W);
-    // objects.push_back(*comfortable_drawer_bottom);
+    Object *comfortable_drawer_bottom = new Object("cube", 10., 10., Vector(0., 0., 0., 1.), Vector(185., 105., 60., 0), Vector(185., 105., 60., 0), Vector(185., 105., 60., 0));
+    transform_cube(comfortable_drawer_bottom, matrix_scale(130. / 10., 50. / 10., 10. / 10.));
+    transform_cube(comfortable_drawer_bottom, matrix_translatef(480., -100., -445., comfortable_drawer_bottom->base));
+    transform_cube(comfortable_drawer_bottom, M_C_to_W);
+    objects.push_back(*comfortable_drawer_bottom);
 
-    // Object *luminary_suport = new Object("cylinder", 40., Vector(480, 10., -530., 1.), 10., Vector(0, 1., 0, 0), 10., Vector(183., 99., 32., 0), Vector(183., 99., 32., 0), Vector(183., 99., 32., 0));
-    // transform_cylinder(luminary_suport, M_C_to_W);
-    // objects.push_back(*luminary_suport);
+    Object *luminary_suport = new Object("cylinder", 40., Vector(480, 10., -530., 1.), 10., Vector(0, 1., 0, 0), 10., Vector(183., 99., 32., 0), Vector(183., 99., 32., 0), Vector(183., 99., 32., 0));
+    transform_cylinder(luminary_suport, M_C_to_W);
+    objects.push_back(*luminary_suport);
 
-    // Object *luminary = new Object("sphere", 50., Vector(480, 50, -530., 1.), 10., Vector(180., 81., 226., 0), Vector(180., 81., 226., 0), Vector(180., 81., 226., 0));
-    // transform_sphere(luminary, M_C_to_W);
-    // objects.push_back(*luminary);
+    Object *luminary = new Object("sphere", 50., Vector(480, 50, -530., 1.), 10., Vector(180., 81., 226., 0), Vector(180., 81., 226., 0), Vector(180., 81., 226., 0));
+    transform_sphere(luminary, M_C_to_W);
+    objects.push_back(*luminary);
 
-    // Object *bed_leg1 = new Object("cylinder", 15., Vector(550, -150., -100., 1.), 25., Vector(0, 1., 0, 0), 10., Vector(26., 27., 25., 0), Vector(26., 27., 25., 0), Vector(26., 27., 25., 0));
-    // transform_cylinder(bed_leg1, M_C_to_W);
-    // objects.push_back(*bed_leg1);
+    Object *bed_leg1 = new Object("cylinder", 15., Vector(550, -150., -100., 1.), 25., Vector(0, 1., 0, 0), 10., Vector(26., 27., 25., 0), Vector(26., 27., 25., 0), Vector(26., 27., 25., 0));
+    transform_cylinder(bed_leg1, M_C_to_W);
+    objects.push_back(*bed_leg1);
 
-    // Object *bed_leg2 = new Object("cylinder", 15., Vector(350., -150., -100., 1.), 25., Vector(0, 1., 0, 0), 10., Vector(26., 27., 25., 0), Vector(26., 27., 25., 0), Vector(26., 27., 25., 0));
-    // transform_cylinder(bed_leg2, M_C_to_W);
-    // objects.push_back(*bed_leg2);
+    Object *bed_leg2 = new Object("cylinder", 15., Vector(350., -150., -100., 1.), 25., Vector(0, 1., 0, 0), 10., Vector(26., 27., 25., 0), Vector(26., 27., 25., 0), Vector(26., 27., 25., 0));
+    transform_cylinder(bed_leg2, M_C_to_W);
+    objects.push_back(*bed_leg2);
 
-    // Object *bed_leg3 = new Object("cylinder", 15., Vector(550., -150., 300., 1.), 25., Vector(0, 1., 0, 0), 10., Vector(26., 27., 25., 0), Vector(26., 27., 25., 0), Vector(26., 27., 25., 0));
-    // transform_cylinder(bed_leg3, M_C_to_W);
-    // objects.push_back(*bed_leg3);
+    Object *bed_leg3 = new Object("cylinder", 15., Vector(550., -150., 300., 1.), 25., Vector(0, 1., 0, 0), 10., Vector(26., 27., 25., 0), Vector(26., 27., 25., 0), Vector(26., 27., 25., 0));
+    transform_cylinder(bed_leg3, M_C_to_W);
+    objects.push_back(*bed_leg3);
 
-    // Object *bed_leg4 = new Object("cylinder", 15., Vector(350., -150., 300., 1.), 25., Vector(0, 1., 0, 0), 10., Vector(26., 27., 25., 0), Vector(26., 27., 25., 0), Vector(26., 27., 25., 0));
-    // transform_cylinder(bed_leg4, M_C_to_W);
-    // objects.push_back(*bed_leg4);
+    Object *bed_leg4 = new Object("cylinder", 15., Vector(350., -150., 300., 1.), 25., Vector(0, 1., 0, 0), 10., Vector(26., 27., 25., 0), Vector(26., 27., 25., 0), Vector(26., 27., 25., 0));
+    transform_cylinder(bed_leg4, M_C_to_W);
+    objects.push_back(*bed_leg4);
 
-    // Object *bed_bottom = new Object("cube", 10., 10., Vector(0., 0., 0., 1.), Vector(26., 27., 25., 0), Vector(26., 27., 25., 0), Vector(26., 27., 25., 0));
-    // transform_cube(bed_bottom, matrix_scale(250. / 10., 60. / 10., 450. / 10.));
-    // transform_cube(bed_bottom, matrix_translatef(450., -100., 100., bed_bottom->base));
-    // transform_cube(bed_bottom, M_C_to_W);
-    // objects.push_back(*bed_bottom);
+    Object *bed_bottom = new Object("cube", 10., 10., Vector(0., 0., 0., 1.), Vector(26., 27., 25., 0), Vector(26., 27., 25., 0), Vector(26., 27., 25., 0));
+    transform_cube(bed_bottom, matrix_scale(250. / 10., 60. / 10., 450. / 10.));
+    transform_cube(bed_bottom, matrix_translatef(450., -100., 100., bed_bottom->base));
+    transform_cube(bed_bottom, M_C_to_W);
+    objects.push_back(*bed_bottom);
 
-    // Object *bed_top = new Object("cube", 10., 10., Vector(0., 0., 0., 1.), Vector(189., 189., 189., 0), Vector(189., 189., 189., 0), Vector(189., 189., 189., 0));
-    // transform_cube(bed_top, matrix_scale(250. / 10., 20. / 10., 450. / 10.));
-    // transform_cube(bed_top, matrix_translatef(450., -60., 100., bed_top->base));
-    // transform_cube(bed_top, M_C_to_W);
-    // objects.push_back(*bed_top);
+    Object *bed_top = new Object("cube", 10., 10., Vector(0., 0., 0., 1.), Vector(189., 189., 189., 0), Vector(189., 189., 189., 0), Vector(189., 189., 189., 0));
+    transform_cube(bed_top, matrix_scale(250. / 10., 20. / 10., 450. / 10.));
+    transform_cube(bed_top, matrix_translatef(450., -60., 100., bed_top->base));
+    transform_cube(bed_top, M_C_to_W);
+    objects.push_back(*bed_top);
 
-    // Object *bed_pillow = new Object("cube", 10., 10., Vector(0., 0., 0., 1.), Vector(250., 249., 247., 0), Vector(250., 249., 247., 0), Vector(250., 249., 247., 0));
-    // transform_cube(bed_pillow, matrix_scale(120. / 10., 15. / 10., 50. / 10.));
-    // transform_cube(bed_pillow, matrix_translatef(450., -45., 265., bed_pillow->base));
-    // transform_cube(bed_pillow, M_C_to_W);
-    // objects.push_back(*bed_pillow);
+    Object *bed_pillow = new Object("cube", 10., 10., Vector(0., 0., 0., 1.), Vector(250., 249., 247., 0), Vector(250., 249., 247., 0), Vector(250., 249., 247., 0));
+    transform_cube(bed_pillow, matrix_scale(120. / 10., 15. / 10., 50. / 10.));
+    transform_cube(bed_pillow, matrix_translatef(450., -45., 265., bed_pillow->base));
+    transform_cube(bed_pillow, M_C_to_W);
+    objects.push_back(*bed_pillow);
 
-    // Object *closet_leg1 = new Object("cylinder", 15., Vector(-550, -150., 0., 1.), 25., Vector(0, 1., 0, 0), 10., Vector(26., 27., 25., 0), Vector(26., 27., 25., 0), Vector(26., 27., 25., 0));
-    // transform_cylinder(closet_leg1, M_C_to_W);
-    // objects.push_back(*closet_leg1);
+    Object *closet_leg1 = new Object("cylinder", 15., Vector(-550, -150., 0., 1.), 25., Vector(0, 1., 0, 0), 10., Vector(26., 27., 25., 0), Vector(26., 27., 25., 0), Vector(26., 27., 25., 0));
+    transform_cylinder(closet_leg1, M_C_to_W);
+    objects.push_back(*closet_leg1);
 
-    // Object *closet_leg2 = new Object("cylinder", 15., Vector(-400., -150., 0., 1.), 25., Vector(0, 1., 0, 0), 10., Vector(26., 27., 25., 0), Vector(26., 27., 25., 0), Vector(26., 27., 25., 0));
-    // transform_cylinder(closet_leg2, M_C_to_W);
-    // objects.push_back(*closet_leg2);
+    Object *closet_leg2 = new Object("cylinder", 15., Vector(-400., -150., 0., 1.), 25., Vector(0, 1., 0, 0), 10., Vector(26., 27., 25., 0), Vector(26., 27., 25., 0), Vector(26., 27., 25., 0));
+    transform_cylinder(closet_leg2, M_C_to_W);
+    objects.push_back(*closet_leg2);
 
-    // Object *closet_leg3 = new Object("cylinder", 15., Vector(-550., -150., 300., 1.), 25., Vector(0, 1., 0, 0), 10., Vector(26., 27., 25., 0), Vector(26., 27., 25., 0), Vector(26., 27., 25., 0));
-    // transform_cylinder(closet_leg3, M_C_to_W);
-    // objects.push_back(*closet_leg3);
+    Object *closet_leg3 = new Object("cylinder", 15., Vector(-550., -150., 300., 1.), 25., Vector(0, 1., 0, 0), 10., Vector(26., 27., 25., 0), Vector(26., 27., 25., 0), Vector(26., 27., 25., 0));
+    transform_cylinder(closet_leg3, M_C_to_W);
+    objects.push_back(*closet_leg3);
 
-    // Object *closet_leg4 = new Object("cylinder", 15., Vector(-400., -150., 300., 1.), 25., Vector(0, 1., 0, 0), 10., Vector(26., 27., 25., 0), Vector(26., 27., 25., 0), Vector(26., 27., 25., 0));
-    // transform_cylinder(closet_leg4, M_C_to_W);
-    // objects.push_back(*closet_leg4);
+    Object *closet_leg4 = new Object("cylinder", 15., Vector(-400., -150., 300., 1.), 25., Vector(0, 1., 0, 0), 10., Vector(26., 27., 25., 0), Vector(26., 27., 25., 0), Vector(26., 27., 25., 0));
+    transform_cylinder(closet_leg4, M_C_to_W);
+    objects.push_back(*closet_leg4);
 
-    // Object *closet = new Object("cube", 10., 10., Vector(0., 0., 0., 1.), Vector(56., 56., 56., 0), Vector(56., 56., 56., 0), Vector(56., 56., 56., 0));
-    // transform_cube(closet, matrix_scale(200. / 10., 400. / 10., 350. / 10.));
-    // transform_cube(closet, matrix_translatef(-475., 75., 150., closet->base));
-    // transform_cube(closet, M_C_to_W);
-    // objects.push_back(*closet);
+    Object *closet = new Object("cube", 10., 10., Vector(0., 0., 0., 1.), Vector(56., 56., 56., 0), Vector(56., 56., 56., 0), Vector(56., 56., 56., 0));
+    transform_cube(closet, matrix_scale(200. / 10., 400. / 10., 350. / 10.));
+    transform_cube(closet, matrix_translatef(-475., 75., 150., closet->base));
+    transform_cube(closet, M_C_to_W);
+    objects.push_back(*closet);
 
-    // Object *closet_door_1 = new Object("cube", 10., 10., Vector(0., 0., 0., 1.), Vector(192., 132., 71., 0), Vector(192., 132., 71., 0), Vector(192., 132., 71., 0));
-    // transform_cube(closet_door_1, matrix_scale(10. / 10., 375. / 10., 140. / 10.));
-    // transform_cube(closet_door_1, matrix_translatef(-370., 75., 225., closet_door_1->base));
-    // transform_cube(closet_door_1, M_C_to_W);
-    // objects.push_back(*closet_door_1);
+    Object *closet_door_1 = new Object("cube", 10., 10., Vector(0., 0., 0., 1.), Vector(192., 132., 71., 0), Vector(192., 132., 71., 0), Vector(192., 132., 71., 0));
+    transform_cube(closet_door_1, matrix_scale(10. / 10., 375. / 10., 140. / 10.));
+    transform_cube(closet_door_1, matrix_translatef(-370., 75., 225., closet_door_1->base));
+    transform_cube(closet_door_1, M_C_to_W);
+    objects.push_back(*closet_door_1);
 
-    // Object *closet_door_2 = new Object("cube", 10., 10., Vector(0., 0., 0., 1.), Vector(192., 132., 71., 0), Vector(192., 132., 71., 0), Vector(192., 132., 71., 0));
-    // transform_cube(closet_door_2, matrix_scale(10. / 10., 375. / 10., 140. / 10.));
-    // transform_cube(closet_door_2, matrix_translatef(-370., 75., 65., closet_door_2->base));
-    // transform_cube(closet_door_2, M_C_to_W);
-    // objects.push_back(*closet_door_2);
+    Object *closet_door_2 = new Object("cube", 10., 10., Vector(0., 0., 0., 1.), Vector(192., 132., 71., 0), Vector(192., 132., 71., 0), Vector(192., 132., 71., 0));
+    transform_cube(closet_door_2, matrix_scale(10. / 10., 375. / 10., 140. / 10.));
+    transform_cube(closet_door_2, matrix_translatef(-370., 75., 65., closet_door_2->base));
+    transform_cube(closet_door_2, M_C_to_W);
+    objects.push_back(*closet_door_2);
 
     Light *point_light = new Light(Vector(0.5, 0.5, 0.5, 0), transform_W_to_C(M_C_to_W, Vector(0, 1200, 0, 1.), 1), "point");
     Light *ambient_light = new Light(Vector(0.3, 0.3, 0.3, 0), Vector(0, 0, 0, 0), "ambient");
@@ -544,15 +538,15 @@ int main()
 
     Scene scene(objects, canva, lights);
 
-    ofstream out("out.ppm");
+    // ofstream out("out.ppm");
 
-    out << "P3";
-    out << endl;
-    out << canva.w << endl;
-    out << canva.h << endl;
-    out << 255 << endl;
+    // out << "P3";
+    // out << endl;
+    // out << canva.w << endl;
+    // out << canva.h << endl;
+    // out << 255 << endl;
 
-    int8 *rgb_image = new int8[(int)canva.w * (int)canva.h * CHANNEL_NUM];
+    int8 *rgba_image = new int8[(int)canva.w * (int)canva.h * CHANNEL_NUM];
     for (int y = 0, c = 0; y < canva.h; y++)
     {
         for (int x = 0; x < canva.w; x++)
@@ -561,51 +555,47 @@ int main()
 
             Color color = scene.trace_ray(Vector(0., 0., 0., 1), D, 0.0, INFINITY, y, x); // Vector(0., 0., 0., 1), D - D, Vector(0., 0., -1., 1)
 
-            rgb_image[c++] = min((int)color.r, 255);
-            rgb_image[c++] = min((int)color.g, 255);
-            rgb_image[c++] = min((int)color.b, 255);
+            rgba_image[c++] = min((int)color.r, 255);
+            rgba_image[c++] = min((int)color.g, 255);
+            rgba_image[c++] = min((int)color.b, 255);
+            rgba_image[c++] = 255;
 
-            out << min((int)color.r, 255) << endl;
-            out << min((int)color.g, 255) << endl;
-            out << min((int)color.b, 255) << endl;
+            // out << min((int)color.r, 255) << endl;
+            // out << min((int)color.g, 255) << endl;
+            // out << min((int)color.b, 255) << endl;
         }
     }
 
-    out.close();
+    std::cout << "test" << std::endl;
 
-    SDLEngine sdlEngine{"IMAGEM",
-                        LARGURA_TELA, ALTURA_TELA,
-                        LARGURA_CANVAS, ALTURA_CANVAS};
+    sf::RenderWindow window(sf::VideoMode(500, 500), "SFML works!");
 
-    SDL_Event e;
+    sf::Image img;
+    sf::Texture tx;
+    sf::Sprite spt;
+    img.create(canva.w, canva.h, rgba_image);
+    tx.loadFromImage(img);
+    spt.setTexture(tx);
 
-    int press = 0, x, y, i, j;
-
-    sdlEngine.atualizarCanvas(rgb_image);
-    sdlEngine.atualizarJanela();
-
-    bool quit = false;
-    cout << "chegou\n";
-    while (!quit)
+    while (window.isOpen())
     {
-        while (SDL_PollEvent(&e))
+        sf::Event event;
+        while (window.pollEvent(event))
         {
-            if (e.type == SDL_QUIT)
-                quit = true;
-            if (SDL_MOUSEBUTTONDOWN == e.type)
-            {
-                if (SDL_BUTTON_LEFT == e.button.button)
-                {
-
-                    // out.close();
-
-                    // stbi_write_png("out.png", canva.w, canva.h, CHANNEL_NUM, rgb_image, canva.w * CHANNEL_NUM);
-
-                    // stbi_image_free(rgb_image);
-                }
-            }
+            if (event.type == sf::Event::Closed)
+                window.close();
         }
+
+        // window.clear();
+        window.draw(spt);
+        window.display();
     }
+
+    // out.close();
+
+    stbi_write_png("out.png", canva.w, canva.h, CHANNEL_NUM, rgba_image, canva.w * CHANNEL_NUM);
+
+    stbi_image_free(rgba_image);
 
     return 0;
 }
