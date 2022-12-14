@@ -62,93 +62,6 @@ typedef struct Scene
         return sqrt((v.x * v.x) + (v.y * v.y) + (v.z * v.z));
     }
 
-    Vector compute_lighting(Vector pi, Vector N, Vector V, Object object)
-    {
-        Vector i(0.0, 0.0, 0.0, 0);
-        Vector L;
-        Vector ds;             // case spot
-        Vector intensity_spot; // case spot
-
-        for (int j = 0; j < lights.size(); j++)
-        {
-            if (lights[j].type == "ambient")
-            {
-                i.x += lights[j].intensity.x * object.k_a.x;
-                i.y += lights[j].intensity.y * object.k_a.y;
-                i.z += lights[j].intensity.z * object.k_a.z;
-            }
-            else
-            {
-                if (lights[j].type == "point")
-                {
-                    L = Vector(lights[j].position.x - pi.x, lights[j].position.y - pi.y, lights[j].position.z - pi.z, 0);
-                }
-                else if (lights[j].type == "directional")
-                {
-                    L = lights[j].direction;
-                }
-                double Pf_Pi = length(L);
-                L = Vector(L.x / Pf_Pi, L.y / Pf_Pi, L.z / Pf_Pi, 0);
-
-                if (lights[j].type == "spot")
-                {
-                    double direction_length = length(lights[j].direction);
-                    ds = Vector(-(lights[j].direction.x / direction_length), -(lights[j].direction.y / direction_length), -(lights[j].direction.z / direction_length), 0);
-                    double l_dot_ds = dot(L, ds);
-                    if (l_dot_ds < cos(lights[j].grau))
-                    {
-                        return Vector((lights[1].intensity.x * object.k_a.x), (lights[1].intensity.y * object.k_a.y), (lights[1].intensity.z * object.k_a.z), 0);
-                    }
-                    intensity_spot = Vector(lights[j].intensity.x * l_dot_ds, lights[j].intensity.y * l_dot_ds, lights[j].intensity.z * l_dot_ds, 0);
-                }
-
-                double n_dot_l = dot(N, L);
-
-                // DIFUSA
-                if (n_dot_l > 0)
-                {
-                    if (lights[j].type == "spot")
-                    {
-                        i.x += calc_intensity(intensity_spot.x, n_dot_l, length(N), length(L), object.specular, object.k_d.x, 1);
-                        i.y += calc_intensity(intensity_spot.y, n_dot_l, length(N), length(L), object.specular, object.k_d.y, 1);
-                        i.z += calc_intensity(intensity_spot.z, n_dot_l, length(N), length(L), object.specular, object.k_d.z, 1);
-                    }
-                    else
-                    {
-                        i.x += calc_intensity(lights[j].intensity.x, n_dot_l, length(N), length(L), object.specular, object.k_d.x, 1);
-                        i.y += calc_intensity(lights[j].intensity.y, n_dot_l, length(N), length(L), object.specular, object.k_d.y, 1);
-                        i.z += calc_intensity(lights[j].intensity.z, n_dot_l, length(N), length(L), object.specular, object.k_d.z, 1);
-                    }
-                }
-
-                // ESPECULAR
-                if (object.specular != -1)
-                {
-                    Vector R = Vector(((2 * dot(L, N)) * N.x) - L.x, ((2 * dot(L, N)) * N.y) - L.y, ((2 * dot(L, N)) * N.z) - L.z, 0);
-                    double r_dot_v = dot(R, V);
-                    if (r_dot_v > 0)
-                    {
-                        if (lights[j].type == "spot")
-                        {
-                            i.x += calc_intensity(intensity_spot.x, r_dot_v, length(R), length(V), object.specular, object.k_e.x, 0);
-                            i.y += calc_intensity(intensity_spot.y, r_dot_v, length(R), length(V), object.specular, object.k_e.y, 0);
-                            i.z += calc_intensity(intensity_spot.z, r_dot_v, length(R), length(V), object.specular, object.k_e.z, 0);
-                        }
-                        else
-                        {
-
-                            i.x += calc_intensity(lights[j].intensity.x, r_dot_v, length(R), length(V), object.specular, object.k_e.x, 0);
-                            i.y += calc_intensity(lights[j].intensity.y, r_dot_v, length(R), length(V), object.specular, object.k_e.y, 0);
-                            i.z += calc_intensity(lights[j].intensity.z, r_dot_v, length(R), length(V), object.specular, object.k_e.z, 0);
-                        }
-                    }
-                }
-            }
-        }
-
-        return i;
-    }
-
     pair<double, double> intersect_ray_sphere(Vector p0, Vector D, Object sphere)
     {
         double r = sphere.radius;
@@ -418,6 +331,118 @@ typedef struct Scene
         return shadow;
     }
 
+    pair<Vector, bool> compute_lighting(Vector pi, Vector N, Vector V, Object object, int y, int x)
+    {
+        Vector i(0.0, 0.0, 0.0, 0);
+        Vector L;
+        Vector ds;             // case spot
+        Vector intensity_spot; // case spot
+        Light ambient;
+
+        for (int k = 0; k < lights.size(); k++)
+        {
+            if (lights[k].type == "ambient")
+            {
+                ambient = lights[k];
+            }
+        }
+
+        for (int j = 0; j < lights.size(); j++)
+        {
+            if (lights[j].type == "ambient")
+            {
+                i.x += lights[j].intensity.x * object.k_a.x;
+                i.y += lights[j].intensity.y * object.k_a.y;
+                i.z += lights[j].intensity.z * object.k_a.z;
+            }
+            else
+            {
+                if (lights[j].type == "point")
+                {
+                    L = Vector(lights[j].position.x - pi.x, lights[j].position.y - pi.y, lights[j].position.z - pi.z, 0);
+                }
+                else if (lights[j].type == "directional")
+                {
+                    L = lights[j].direction;
+                }
+                double Pf_Pi = length(L);
+                L = Vector(L.x / Pf_Pi, L.y / Pf_Pi, L.z / Pf_Pi, 0);
+
+                if (lights[j].type == "spot")
+                {
+                    double direction_length = length(lights[j].direction);
+                    ds = Vector(-(lights[j].direction.x / direction_length), -(lights[j].direction.y / direction_length), -(lights[j].direction.z / direction_length), 0);
+                    L = Vector(lights[j].position.x - pi.x, lights[j].position.y - pi.y, lights[j].position.z - pi.z, 0);
+                    Pf_Pi = length(L);
+                    L = Vector(L.x / Pf_Pi, L.y / Pf_Pi, L.z / Pf_Pi, 0);
+                    double l_dot_ds = dot(L, ds);
+                    if (l_dot_ds < cos(lights[j].grau))
+                    {
+                        return {Vector(255 * (ambient.intensity.x * object.k_a.x), 255 * (ambient.intensity.y * object.k_a.y), 255 * (ambient.intensity.z * object.k_a.z), 0), false};
+                    }
+                    intensity_spot = Vector(lights[j].intensity.x * l_dot_ds, lights[j].intensity.y * l_dot_ds, lights[j].intensity.z * l_dot_ds, 0);
+                }
+
+                if (has_shadow(pi, L, Pf_Pi))
+                {
+                    if (object.type == "plane")
+                    {
+                        if (object.texture)
+                        {
+                            int h = object.height;
+                            int w = object.width;
+                            return {Vector(object.matrix_img[y % h][x % w].r * (ambient.intensity.x * object.k_a.x), object.matrix_img[y % h][x % w].g * (ambient.intensity.y * object.k_a.y), object.matrix_img[y % h][x % w].b * (ambient.intensity.z * object.k_a.z), 0), true};
+                        }
+                    }
+                    return {Vector(255 * (ambient.intensity.x * object.k_a.x), 255 * (ambient.intensity.y * object.k_a.y), 255 * (ambient.intensity.z * object.k_a.z), 0), true};
+                }
+
+                double n_dot_l = dot(N, L);
+
+                // DIFUSA
+                if (n_dot_l > 0)
+                {
+                    if (lights[j].type == "spot")
+                    {
+                        i.x += calc_intensity(intensity_spot.x, n_dot_l, length(N), length(L), object.specular, object.k_d.x, 1);
+                        i.y += calc_intensity(intensity_spot.y, n_dot_l, length(N), length(L), object.specular, object.k_d.y, 1);
+                        i.z += calc_intensity(intensity_spot.z, n_dot_l, length(N), length(L), object.specular, object.k_d.z, 1);
+                    }
+                    else
+                    {
+                        i.x += calc_intensity(lights[j].intensity.x, n_dot_l, length(N), length(L), object.specular, object.k_d.x, 1);
+                        i.y += calc_intensity(lights[j].intensity.y, n_dot_l, length(N), length(L), object.specular, object.k_d.y, 1);
+                        i.z += calc_intensity(lights[j].intensity.z, n_dot_l, length(N), length(L), object.specular, object.k_d.z, 1);
+                    }
+                }
+
+                // ESPECULAR
+                if (object.specular != -1)
+                {
+                    Vector R = Vector(((2 * dot(L, N)) * N.x) - L.x, ((2 * dot(L, N)) * N.y) - L.y, ((2 * dot(L, N)) * N.z) - L.z, 0);
+                    double r_dot_v = dot(R, V);
+                    if (r_dot_v > 0)
+                    {
+                        if (lights[j].type == "spot")
+                        {
+                            i.x += calc_intensity(intensity_spot.x, r_dot_v, length(R), length(V), object.specular, object.k_e.x, 0);
+                            i.y += calc_intensity(intensity_spot.y, r_dot_v, length(R), length(V), object.specular, object.k_e.y, 0);
+                            i.z += calc_intensity(intensity_spot.z, r_dot_v, length(R), length(V), object.specular, object.k_e.z, 0);
+                        }
+                        else
+                        {
+                            i.x += calc_intensity(lights[j].intensity.x, r_dot_v, length(R), length(V), object.specular, object.k_e.x, 0);
+                            i.y += calc_intensity(lights[j].intensity.y, r_dot_v, length(R), length(V), object.specular, object.k_e.y, 0);
+                            i.z += calc_intensity(lights[j].intensity.z, r_dot_v, length(R), length(V), object.specular, object.k_e.z, 0);
+                        }
+                    }
+                }
+            }
+        }
+
+        return {Vector(255 * i.x, 255 * i.y, 255 * i.z, 0), false};
+    }
+
     Color define_color(double closest_t, Object object, Vector p0, Vector D, int y, int x)
     {
         Vector pi = Vector(p0.x + (D.x * closest_t), p0.y + (D.y * closest_t), p0.z + (D.z * closest_t), 0);
@@ -452,25 +477,27 @@ typedef struct Scene
             N = object.normal;
         }
 
-        Vector L = Vector(lights[0].position.x - pi.x, lights[0].position.y - pi.y, lights[0].position.z - pi.z, 0);
-        double length_Pf_Pi = length(L);
-        L = Vector(L.x / length_Pf_Pi, L.y / length_Pf_Pi, L.z / length_Pf_Pi, 0);
+        // Vector L = Vector(lights[0].position.x - pi.x, lights[0].position.y - pi.y, lights[0].position.z - pi.z, 0);
+        // double length_Pf_Pi = length(L);
+        // L = Vector(L.x / length_Pf_Pi, L.y / length_Pf_Pi, L.z / length_Pf_Pi, 0);
 
-        if (has_shadow(pi, L, length_Pf_Pi))
-        {
-            if (object.type == "plane")
-            {
-                if (object.texture)
-                {
-                    int h = object.height;
-                    int w = object.width;
-                    return Color(object.matrix_img[y % h][x % w].r * (lights[1].intensity.x * object.k_a.x), object.matrix_img[y % h][x % w].g * (lights[1].intensity.y * object.k_a.y), object.matrix_img[y % h][x % w].b * (lights[1].intensity.z * object.k_a.z));
-                }
-            }
-            return Color(255 * (lights[1].intensity.x * object.k_a.x), 255 * (lights[1].intensity.y * object.k_a.y), 255 * (lights[1].intensity.z * object.k_a.z));
-        }
+        // if (has_shadow(pi, L, length_Pf_Pi))
+        // {
+        //     if (object.type == "plane")
+        //     {
+        //         if (object.texture)
+        //         {
+        //             int h = object.height;
+        //             int w = object.width;
+        //             return Color(object.matrix_img[y % h][x % w].r * (lights[1].intensity.x * object.k_a.x), object.matrix_img[y % h][x % w].g * (lights[1].intensity.y * object.k_a.y), object.matrix_img[y % h][x % w].b * (lights[1].intensity.z * object.k_a.z));
+        //         }
+        //     }
+        //     return Color(255 * (lights[1].intensity.x * object.k_a.x), 255 * (lights[1].intensity.y * object.k_a.y), 255 * (lights[1].intensity.z * object.k_a.z));
+        // }
 
-        Vector i = compute_lighting(pi, N, Vector(-D.x, -D.y, -D.z, 0), object);
+        Vector i;
+        bool shadow;
+        tie(i, shadow) = compute_lighting(pi, N, Vector(-D.x, -D.y, -D.z, 0), object, y, x);
 
         if (object.type == "plane")
         {
@@ -478,11 +505,17 @@ typedef struct Scene
             {
                 int h = object.height;
                 int w = object.width;
-                return Color(object.matrix_img[y % h][x % w].r * i.x, object.matrix_img[y % h][x % w].g * i.y, object.matrix_img[y % h][x % w].b * i.z);
+
+                if (shadow)
+                {
+                    return Color(i.x, i.y, i.z);
+                }
+
+                return Color(object.matrix_img[y % h][x % w].r * (i.x / 255.), object.matrix_img[y % h][x % w].g * (i.y / 255.), object.matrix_img[y % h][x % w].b * (i.z / 255.));
             }
         }
 
-        return Color(255 * i.x, 255 * i.y, 255 * i.z);
+        return Color(i.x, i.y, i.z);
     }
 
     Color trace_ray(Vector p0, Vector D, double t_min, double t_max, int y, int x)
