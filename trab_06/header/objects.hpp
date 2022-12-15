@@ -18,9 +18,7 @@ typedef struct Object
     string type;
     double radius;
     Vector center;
-    Vector p_pi;
     Vector normal;
-    Vector base;
     double edge;
     vector<Vector> LV;
     vector<VertexIndex> LA;
@@ -37,6 +35,7 @@ typedef struct Object
     Color **matrix_img;
     int height;
     int width;
+    vector<pair<int, int>> v_points;
 
     tuple<vector<Vector>, vector<VertexIndex>, vector<EdgeIndex>> cube_maping(Vector b, double edge_obj)
     {
@@ -114,7 +113,7 @@ typedef struct Object
     Object(string object_type, Vector P_pi, Vector n, double s, Vector K_d, Vector K_e, Vector K_a, bool have_texture, const char *path_image) // Plane
     {
         type = object_type;
-        p_pi = P_pi;
+        center = P_pi;
         normal = n;
         specular = s;
         k_d = convert_rgb(K_d);
@@ -155,7 +154,7 @@ typedef struct Object
     {
         type = object_type;
         radius = r;
-        base = b; // centro da base
+        center = b; // centro da base
         h = height;
         u = uu;
         specular = s;
@@ -168,7 +167,7 @@ typedef struct Object
     Object(string object_type, double edge_obj, double s, Vector b, Vector K_d, Vector K_e, Vector K_a) // cube
     {
         type = object_type;
-        base = b; // centro da base
+        center = b; // centro da base
         edge = edge_obj;
         specular = s;
         k_d = convert_rgb(K_d);
@@ -200,9 +199,9 @@ typedef struct Object
 typedef struct Closest_Object
 {
     double closest_t;
-    Object object;
+    Object *object = nullptr;
 
-    Closest_Object(double t, Object obj)
+    Closest_Object(double t, Object *obj)
     {
         closest_t = t;
         object = obj;
